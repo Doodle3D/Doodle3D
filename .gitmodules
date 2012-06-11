@@ -1,0 +1,12 @@
+[submodule "addons/ofxExtras"]
+	path = addons/ofxExtras
+	url = https://github.com/companje/ofxExtras
+[submodule "addons/ofxGCode"]
+	path = addons/ofxGCode
+	url = https://github.com/companje/ofxGCode
+[submodule "addons/ofxIniSettings"]
+	path = addons/ofxIniSettings
+	url = https://github.com/companje/ofxIniSettings
+[submodule "addons/ofxUltimaker"]
+	path = addons/ofxUltimaker
+	url = https://github.com/companje/ofxUltimaker
