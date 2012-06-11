@@ -33,7 +33,7 @@ public:
     map<int,int> func;
 
     //float temperature;
-    bool debug;    
+    bool debug;
     float screenToMillimeterScale;
     float scaleStep;
     float rotationStep;
@@ -59,16 +59,17 @@ public:
     float spiralRadius;
     float useSubLayers;
     float circleDetail;
+    bool useUltimaker;
 
     void setup() {
         cur=-1;
         isDrawing=false;
         clickAlpha=0;
         clickAlphaDecay=20;
-        
+
         loadSettings();
         ofSetWindowPosition(0,0);
-        ofSetFullscreen(true);
+        //ofSetFullscreen(true);
         ofSetFrameRate(ini.get("frameRate", 30));
         bg.loadImage("images/bg.png");
         bg_bezig.loadImage("images/bg-bezig.png");
@@ -81,29 +82,32 @@ public:
         path.setCurveResolution(100);
         path.setStrokeWidth(2);
         path.setStrokeColor(0);
-        
+
         ofEnableSmoothing();
         ofEnableAlphaBlending();
-        
-        
-        listDir();
-        ultimaker.listDevices();
-        ultimaker.connect(ini.get("portnumber",0));
-//        ofxExit();
 
-        
+        if (useUltimaker) {
+            ultimaker.listDevices();
+            ultimaker.connect(ini.get("portnumber",0));
+        }
+
+        listDir();
+
         if (autoLoadImage!="") {
+            cout << "autoload: " << autoLoadImage << endl;
             for (cur=0; cur<dir.numFiles(); cur++) {
+                //cout << "file: " << dir.getName(cur) << endl;
                 if (dir.getName(cur)==autoLoadImage || dir.getPath(cur)==autoLoadImage) {
+                    //cout << "found" << endl;
                     load(dir.getPath(cur));
                     break;
                 }
             }
         }
-        
+
         setVerticalFunc(ini.get("verticalFunc", "$").at(0));
     }
-    
+
     void loadSettings() {
         ini.load("Doodle3D.ini");
         debug = ini.get("debug",false);
@@ -129,14 +133,15 @@ public:
         desiredTemperature = ini.get("desiredTemperature",220);
         useSubLayers = ini.get("useSubLayers",false);
         circleDetail = ini.get("circleDetail",60);
+        useUltimaker = ini.get("useUltimaker",true);
     }
-    
+
     void setVerticalFunc(char c) {
         int minX=scaleBounds.x;
         int maxX=scaleBounds.x+scaleBounds.width/2-20;
         int minY=scaleBounds.y;
         int maxY=scaleBounds.y+scaleBounds.height;
-        
+
         for (int i=minY; i<maxY; i++) {
             float ii=ofNormalize(i, minY, maxY);
             if (c=='|') func[i]=ofxLerp(minX,maxX,.5);
@@ -157,8 +162,8 @@ public:
         if (ofGetKeyPressed(OF_KEY_RIGHT)) path.translate(ofPoint(translateStep,0));
         if (ofGetKeyPressed(OF_KEY_UP)) path.translate(ofPoint(0,-translateStep));
         if (ofGetKeyPressed(OF_KEY_DOWN)) path.translate(ofPoint(0,translateStep));
-        
-        if (ofGetFrameNum()==200) { 
+
+        if (useUltimaker && ofGetFrameNum()==200) {
             cout << "get temperature at frame 200" << endl;
             ultimaker.readTemperature();
         }
@@ -177,14 +182,14 @@ public:
         ofRect(1110,531+ofMap(ultimaker.temperature,0,240,230,0,true),127,240);
         ofSetColor(255);
         thermomask.draw(0,0);
-        
+
         if (ultimaker.temperature<desiredTemperature-3) {
             kruis.draw(0,0);
             if (ultimaker.isPrinting) opwarmen.draw(0,0);
         } else {
             krul.draw(0,0);
         }
-        
+
         vector<ofSubPath> &subpaths = path.getSubPaths();
         if (subpaths.size()>0) path.draw(0,0);
         if (subpaths.size()>1) {
@@ -195,7 +200,7 @@ public:
                 ofLine(left.back().to,right.front().to);
             }
         }
-        
+
         if (debug) {
             vector<ofPoint*> points = ofxGetPointsFromPath(path);
             ofSetColor(255,0,0);
@@ -205,15 +210,15 @@ public:
             ofCircle(ofxGetCenterOfMass(points),3);
             ofSetColor(0,255,0);
             ofCircle(ofxGetBoundingBox(points).getCenter(),3);
-            
-            ofSetColor(0);        
+
+            ofSetColor(0);
             ofDrawBitmapString("file:" + ofToString(cur) + "/" + ofToString(dir.numFiles()),15,15);
             ofDrawBitmapString(ofToString(ultimaker.temperature),1110+50,531+200);
-            
+
             ofSetColor(255,50);
             mask.draw(0,0);
         }
-               
+
         //vertical
         if (isAdvanced) {
             int d=876;
@@ -231,8 +236,8 @@ public:
                 int x = func[y];
                 glVertex2f(x,y);
             }
-            glEnd();  
-            
+            glEnd();
+
             glBegin(GL_LINE_STRIP);
             for (map<int,int>::iterator it=func.begin(); it!=func.end(); it++) {
                 int y = it->first;
@@ -241,7 +246,7 @@ public:
             }
             glEnd();
         }
-        
+
         //click feedback
         ofSetLineWidth(1);
         ofSetColor(255,clickAlpha);
@@ -249,45 +254,45 @@ public:
         ofCircle(clickPoint,clickAlpha/6);
         if (clickAlpha>0) clickAlpha-=clickAlphaDecay;
     }
-    
+
     float scaleFunction(float f) {
         if (func.size()==0) return 0;
-        
+
         int y = ofxLerp(scaleBounds.y,scaleBounds.y+scaleBounds.height,f);
         int x = func.find(y)->second;
-                
+
         return ofMap(x, scaleBounds.x, scaleBounds.x+scaleBounds.width,minScale,maxScale,true);
     }
- 
+
     void make() {
         cout << "make" << endl;
-        
+
         ofPath tmpPath = path;
-        
+
         float extruder = 0;
-        
+
         gcode.lines.clear();
         gcode.insert("gcode/start.gcode");
-        
+
         vector<ofSubPath> &subpaths = path.getSubPaths();
-        
-        vector<ofPoint*> points = ofxGetPointsFromPath(path);   
+
+        vector<ofPoint*> points = ofxGetPointsFromPath(path);
         if (points.size()<2) return;
-        
+
         bool isLoop = points.front()->distance(*points.back())<10;
-                
+
         for (int layer=0; layer<layers; layer++) {
-        
+
             //reset
             path = tmpPath;
-            
-            points = ofxGetPointsFromPath(path);   
- 
+
+            points = ofxGetPointsFromPath(path);
+
             //scale to machine dimensions
             path.translate(-offset); //left corner of drawing field in pixels
             path.translate(-ofxGetCenterOfMass(points));
             path.scale(screenToMillimeterScale,-screenToMillimeterScale);
-//            path.translate(ofxGetCenterOfMass(points)); 
+//            path.translate(ofxGetCenterOfMass(points));
 
             float layerScale = scaleFunction(float(layer)/layers);
 
@@ -296,28 +301,28 @@ public:
 //            }
 
             float angle=float(layer)/layers*TWO_PI;
-            
-//            path.translate(-ofxGetCenterOfMass(points));                          
+
+//            path.translate(-ofxGetCenterOfMass(points));
             path.scale(layerScale,layerScale); //1+layer*scaleStep, 1+layer*scaleStep);
             if (doSpiral) path.translate(ofPoint(spiralRadius*sin(angle),spiralRadius*cos(angle)));
             path.rotate(layer*rotationStep,ofVec3f(0,0,1));
 //            path.translate(ofxGetCenterOfMass(points));
-                        
+
             bool even = (layer%2==0);
-            
+
             for (int j=0; j<subpaths.size(); j++) {
-                
+
                 vector<ofSubPath::Command> &commands = subpaths[even ? j : subpaths.size()-1-j].getCommands();
-                
+
                 for (int i=0; i<commands.size(); i++) {
                     int last = commands.size()-1;
-                    
+
                     ofPoint from,to;
-                    
+
                     if (isLoop) even = true; //overrule, don't go backwards
-                    
+
                     if (isLoop && i==last) continue; //prevent double action
-                    
+
                     if (even) {
                         to = commands[i].to; //deze
                         from = commands[i>0?i-1:0].to; //vorige
@@ -325,9 +330,9 @@ public:
                         to = commands[last-i].to; //deze achterwaarts
                         from = commands[i>0?last-i+1:last].to; //volgende
                     }
-                    
-                    extruder += flowrate * from.distance(to);                    
-                    
+
+                    extruder += flowrate * from.distance(to);
+
                     float sublayer = layer + (useSubLayers ? float(i)/commands.size() : 0);
 
                     gcode.addCommandWithParams("G1 X%03f Y%03f Z%03f F%03f E%03f",
@@ -335,14 +340,14 @@ public:
                                                sublayer*layerHeight+zOffset,
                                                !isLoop && i==0 ? travelrate : feedrate,
                                                extruder);
-                }                
-            }            
+                }
+            }
         }
-                
+
         gcode.insert("gcode/end.gcode");
         gcode.save("gcode/output.gcode");
         print();
-        
+
         path = tmpPath;
     }
 
@@ -361,7 +366,7 @@ public:
         cur = (cur+1+dir.numFiles()) % dir.numFiles();
         load(dir.getPath(cur));
     }
-    
+
     void deleteCurrentFile() {
         ofFile f(dir.getPath(cur));
         f.remove();
@@ -390,13 +395,13 @@ public:
                 else path.lineTo(p.x,p.y);
             }
         }
-        
+
         //temp
-        vector<ofPoint*> points = ofxGetPointsFromPath(path);        
+        vector<ofPoint*> points = ofxGetPointsFromPath(path);
         if (points.size()<2) return;
         bool isLoop = points.front()->distance(*points.back())<10;
         cout << filename << ", loop=" << isLoop << endl;
-        
+
         ofxSimplifyPath(path);
     }
 
@@ -407,7 +412,7 @@ public:
             saveAs();
         }
     }
-    
+
     void saveAs() {
         ofFileDialogResult result = ofSystemSaveDialog("doodle.txt","Je tekening wordt altijd opgeslagen in de doodles map.");
         if (result.bSuccess) save(result.getName());
@@ -449,7 +454,7 @@ public:
         path.clear();
         path.flagShapeChanged();
     }
-    
+
     void stop() {
         ultimaker.stopPrint();
         //ultimaker.load("end.gcode");
@@ -459,7 +464,7 @@ public:
     void mousePressed(int x, int y, int button) {
         clickPoint.set(x,y);
         clickAlpha=150;
-        
+
         bool hitLeft = mask.getColor(x,y).getHex()==btnLeftVertical;
         bool hitRight = mask.getColor(x,y).getHex()==btnRightVertical;
         if (isAdvanced && (hitLeft || hitRight)) func.clear();
@@ -476,9 +481,9 @@ public:
             case btnStop: stop(); break;
             default: break;
         }
-        
+
     }
-    
+
     void mouseMoved(int x, int y) {
 
     }
@@ -489,40 +494,40 @@ public:
         bool hitRight = mask.getColor(x,y).getHex()==btnRightVertical;
         bool hasMouseMoved = ofGetMouseX()!=ofGetPreviousMouseX() || ofGetMouseY()!=ofGetPreviousMouseY();
         bool hitLargeField = !isAdvanced && (hitLeft || hitRight);
-        
+
         if (hasMouseMoved && (hitField || hitLargeField)) {
             if (isDrawing) path.lineTo(x,y);
         }
-        
+
         if (isAdvanced && (hitLeft || hitRight)) {
-            
+
             int x = ofGetMouseX();
             int y = ofGetMouseY();
             int py = ofGetPreviousMouseY();
-        
+
             if (hitRight) x=960-(x-960);
             if (x>950) x=950;
-       
+
             if (!scaleBounds.inside(x,y)) return;
             if (!scaleBounds.inside(x,py)) return;
-            
+
             float minY = min(y,py);
             float maxY = max(y,py);
-                        
+
             func[ofGetMouseY()] = x;
-            
+
             if (fabs(minY-maxY) < FLT_EPSILON) maxY=minY+1; //prevent /0
-            
+
             for (int i=minY; i<=maxY; i++) {
                 func[i] = ofMap(i, minY, maxY, func[minY], func[maxY]);
                 func[i] = ofClamp(func[i],scaleBounds.x, scaleBounds.x+scaleBounds.width);
             }
         }
     }
-    
+
     void mouseReleased(int x, int y, int button) {
         ofxSimplifyPath(path);
-        
+
         //smooth vertical func
         if (isAdvanced) {
             for (int i=0; i<20; i++) {
@@ -538,7 +543,7 @@ public:
         }
         isDrawing=false;
     }
-    
+
     void createCircle() {
         for (int i=0,n=circleDetail; i<=n; i++) {
             float ii=float(i)/n;
@@ -550,7 +555,7 @@ public:
 //        path.arc(400, 400, 100, 100, 0, 360);
 //        path.flagShapeChanged();
     }
-    
+
     void keyPressed(int key) {
         switch (key) {
             case 'f': ofToggleFullscreen(); break;
@@ -577,23 +582,23 @@ public:
             case 'a': isAdvanced=!isAdvanced; break;
             case 'C': createCircle(); break;
             case '*': loadSettings(); break;
-            case '/': 
-            case '\\': 
+            case '/':
+            case '\\':
             case '$':
             case '#':
             case '|': setVerticalFunc(key); break;
         }
     }
-    
-    
+
+
 
 }; //App
 
 int main() {
-    ofAppGlutWindow window; 
-    window.setGlutDisplayString("rgba double samples>=4"); 
-    ofSetupOpenGL(&window, 1280, 800, OF_WINDOW); 
-    ofRunApp(new App()); 
+    ofAppGlutWindow window;
+    window.setGlutDisplayString("rgba double samples>=4");
+    ofSetupOpenGL(&window, 1280, 800, OF_WINDOW);
+    ofRunApp(new App());
 }
 
 
