@@ -88,7 +88,8 @@ public:
 
         if (useUltimaker) {
             ultimaker.listDevices();
-            ultimaker.connect(ini.get("portnumber",0));
+            if (ini.has("portnumber")) ultimaker.connect(ini.get("portnumber",0));
+            if (ini.has("portname")) ultimaker.connect(ini.get("portname","/dev/ttyUSB0"));
         }
 
         listDir();
@@ -176,19 +177,19 @@ public:
 
     void draw() {
         ofSetColor(255);
-        if (ultimaker.isPrinting) bg_bezig.draw(0,0); else bg.draw(0,0);
+        //if (ultimaker.isPrinting) bg_bezig.draw(0,0); else bg.draw(0,0);
         ofFill();
         ofSetColor(255,0,0);
         ofRect(1110,531+ofMap(ultimaker.temperature,0,240,230,0,true),127,240);
         ofSetColor(255);
-        thermomask.draw(0,0);
+        //thermomask.draw(0,0);
 
-        if (ultimaker.temperature<desiredTemperature-3) {
-            kruis.draw(0,0);
-            if (ultimaker.isPrinting) opwarmen.draw(0,0);
-        } else {
-            krul.draw(0,0);
-        }
+//        if (ultimaker.temperature<desiredTemperature-3) {
+//            kruis.draw(0,0);
+//            if (ultimaker.isPrinting) opwarmen.draw(0,0);
+//        } else {
+//            krul.draw(0,0);
+//        }
 
         vector<ofSubPath> &subpaths = path.getSubPaths();
         if (subpaths.size()>0) path.draw(0,0);
@@ -265,7 +266,7 @@ public:
     }
 
     void make() {
-        cout << "make" << endl;
+        cout << "make: frame=" << ofGetFrameNum() << endl;
 
         ofPath tmpPath = path;
 
@@ -352,7 +353,7 @@ public:
     }
 
     void print() {
-        if (ofGetFrameNum()<300 || ultimaker.isBusy) return;
+        if (ofGetFrameNum()<210 || ultimaker.isBusy) return;
         ultimaker.load("gcode/output.gcode");
         ultimaker.startPrint();
     }
@@ -545,7 +546,7 @@ public:
     }
 
     void createCircle() {
-        for (int i=0,n=circleDetail; i<=n; i++) {
+        for (float i=0,n=circleDetail; i<=n; i++) {
             float ii=float(i)/n;
             float x=100*sin(ii*TWO_PI)+500;
             float y=100*cos(ii*TWO_PI)+400;
@@ -596,7 +597,7 @@ public:
 
 int main() {
     ofAppGlutWindow window;
-    window.setGlutDisplayString("rgba double samples>=4");
+    //window.setGlutDisplayString("rgba double samples>=4");
     ofSetupOpenGL(&window, 1280, 800, OF_WINDOW);
     ofRunApp(new App());
 }
