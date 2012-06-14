@@ -61,11 +61,14 @@ public:
     float circleDetail;
     bool useUltimaker;
     ofPoint thermomask_position, opwarmen_position;
+    ofPoint kruis_position,krul_position;
     bool lightweight;
+    int redrawBg;
 
     void setup() {
         cur=-1;
         isDrawing=false;
+        redrawBg=false;
         clickAlpha=0;
         clickAlphaDecay=20;
 
@@ -85,14 +88,18 @@ public:
         path.setCurveResolution(100);
         path.setStrokeWidth(2);
         path.setStrokeColor(0);
-//        ofEnableSmoothing();
-//      ofEnableAlphaBlending();
+        if (!lightweight) ofEnableSmoothing();
+        ofEnableAlphaBlending();
+        //ofDisableAlphaBlending();
 
+        bool connected = false;
         if (useUltimaker) {
             ultimaker.listDevices();
-            if (ini.has("portnumber")) ultimaker.connect(ini.get("portnumber",0));
-            if (ini.has("portname")) ultimaker.connect(ini.get("portname","/dev/ttyUSB0"));
+            if (ini.has("portnumber")) connected = ultimaker.connect(ini.get("portnumber",0));
+            if (ini.has("portname")) connected = ultimaker.connect(ini.get("portname","/dev/ttyUSB0"));
+            if (!connected) useUltimaker = false;
         }
+        
 
         listDir();
 
@@ -110,8 +117,7 @@ public:
 
         setVerticalFunc(ini.get("verticalFunc", "$").at(0));
 
-        ofSetBackgroundAuto(!lightweight);
-
+        if (lightweight) ofSetBackgroundAuto(false);
     }
 
     void loadSettings() {
@@ -142,14 +148,17 @@ public:
         useUltimaker = ini.get("useUltimaker",true);
         thermomask_position = ini.get("thermomask.position",ofPoint());
         opwarmen_position = ini.get("opwarmen.position",ofPoint());
+        kruis_position = ini.get("kruis.position",ofPoint());
+        krul_position = ini.get("krul.position",ofPoint());
         lightweight = ini.get("lightweight",false);
+        redrawBg = 10; //timer
     }
 
 
 
     void draw() {
         ofSetColor(255);
-        if (ofGetFrameNum()==10) {
+        if (!lightweight || redrawBg<0) {
             bg.draw(0,0);
         }
 
@@ -160,12 +169,12 @@ public:
         ofSetColor(255);
         thermomask.draw(thermomask_position);
 
-//        if (ultimaker.temperature<desiredTemperature-3) {
-//            //kruis.draw(0,0);
-//            if (ultimaker.isPrinting) opwarmen.draw(opwarmen_position.x,opwarmen_position.y);
-//        } else {
-//            //krul.draw(0,0);
-//        }
+        if (ultimaker.temperature<desiredTemperature-3) {
+            kruis.draw(kruis_position);
+            if (ultimaker.isPrinting) opwarmen.draw(opwarmen_position.x,opwarmen_position.y);
+        } else {
+            krul.draw(krul_position);
+        }
 
         vector<ofSubPath> &subpaths = path.getSubPaths();
         if (subpaths.size()>0) path.draw(0,0);
@@ -225,11 +234,16 @@ public:
         }
 
         //click feedback
-        ofSetLineWidth(1);
-        ofSetColor(255,clickAlpha);
-        ofFill();
-        ofCircle(clickPoint,clickAlpha/6);
-        if (clickAlpha>0) clickAlpha-=clickAlphaDecay;
+        if (!lightweight) {
+            ofSetLineWidth(1);
+            ofSetColor(255,clickAlpha);
+            ofFill();
+            ofCircle(clickPoint,clickAlpha/6);
+            if (clickAlpha>0) clickAlpha-=clickAlphaDecay;
+        }
+        
+        redrawBg--;
+        if (redrawBg<0) redrawBg=-1;
     }
 
     float scaleFunction(float f) {
@@ -358,7 +372,7 @@ public:
 
     void load(string filename) {
         if (!ofxFileExists(filename)) return; //file not existing or removed
-        path.clear();
+        clear(); //path.clear();
         vector<string> lines = ofxLoadStrings(filename);
         for (int i=0; i<lines.size(); i++) {
             vector<string> coords = ofSplitString(lines[i], " ");
@@ -425,11 +439,13 @@ public:
             subpaths.erase(subpaths.end());
         }
         path.flagShapeChanged();
+        redrawBg = true;
     }
 
     void clear() {
         path.clear();
         path.flagShapeChanged();
+        redrawBg = true;
     }
 
     void stop() {
@@ -439,8 +455,10 @@ public:
     }
 
     void mousePressed(int x, int y, int button) {
-        clickPoint.set(x,y);
-        clickAlpha=150;
+        if (!mask.getColor(x,y).getHex()==btnField) {
+            clickPoint.set(x,y);
+            clickAlpha=150;
+        }
 
         bool hitLeft = mask.getColor(x,y).getHex()==btnLeftVertical;
         bool hitRight = mask.getColor(x,y).getHex()==btnRightVertical;
@@ -559,6 +577,7 @@ public:
             case 'a': isAdvanced=!isAdvanced; break;
             case 'C': createCircle(); break;
             case '*': loadSettings(); break;
+            case '&': lightweight=!lightweight; break;
             case '/':
             case '\\':
             case '$':
