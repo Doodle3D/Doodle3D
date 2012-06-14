@@ -64,6 +64,7 @@ public:
     ofPoint kruis_position,krul_position;
     bool lightweight;
     int redrawBg;
+    int temperatureCheckEveryFrames;
 
     void setup() {
         cur=-1;
@@ -71,6 +72,7 @@ public:
         redrawBg=false;
         clickAlpha=0;
         clickAlphaDecay=20;
+        redrawBg = 10; //timer
 
         loadSettings();
         ofSetWindowPosition(0,0);
@@ -90,6 +92,7 @@ public:
         path.setStrokeColor(0);
         if (!lightweight) ofEnableSmoothing();
         ofEnableAlphaBlending();
+        ofBackground(255);
         //ofDisableAlphaBlending();
 
         bool connected = false;
@@ -99,7 +102,6 @@ public:
             if (ini.has("portname")) connected = ultimaker.connect(ini.get("portname","/dev/ttyUSB0"));
             if (!connected) useUltimaker = false;
         }
-        
 
         listDir();
 
@@ -151,30 +153,31 @@ public:
         kruis_position = ini.get("kruis.position",ofPoint());
         krul_position = ini.get("krul.position",ofPoint());
         lightweight = ini.get("lightweight",false);
-        redrawBg = 10; //timer
+        temperatureCheckEveryFrames = ini.get("temperatureCheckEveryFrames",200);
     }
 
 
 
     void draw() {
         ofSetColor(255);
-        if (!lightweight || redrawBg<0) {
+        if (!lightweight || redrawBg>-1) {
             bg.draw(0,0);
         }
 
         //if (ultimaker.isPrinting) bg_bezig.draw(0,0); else bg.draw(0,0);
         ofFill();
         ofSetColor(255,0,0);
-        ofRect(1110,531+ofMap(ultimaker.temperature,0,240,230,0,true),127,240);
+        float h = ultimaker.temperature; //ofMap(ultimaker.temperature,0,240,230,0,true);
+        ofRect(1110,775-h,127,h);
         ofSetColor(255);
-//        thermomask.draw(thermomask_position);
+        thermomask.draw(thermomask_position);
 
-//        if (ultimaker.temperature<desiredTemperature-3) {
-//            kruis.draw(kruis_position);
-//            if (ultimaker.isPrinting) opwarmen.draw(opwarmen_position.x,opwarmen_position.y);
-//        } else {
-//            krul.draw(krul_position);
-//        }
+        if (ultimaker.temperature<desiredTemperature-3) {
+            kruis.draw(kruis_position);
+            if (ultimaker.isPrinting) opwarmen.draw(opwarmen_position.x,opwarmen_position.y);
+        } else {
+            krul.draw(krul_position);
+        }
 
         vector<ofSubPath> &subpaths = path.getSubPaths();
         if (subpaths.size()>0) path.draw(0,0);
@@ -241,7 +244,7 @@ public:
             ofCircle(clickPoint,clickAlpha/6);
             if (clickAlpha>0) clickAlpha-=clickAlphaDecay;
         }
-        
+
         redrawBg--;
         if (redrawBg<0) redrawBg=-1;
     }
@@ -405,8 +408,10 @@ public:
     }
 
     void saveAs() {
+        //ofSetFullscreen(false);
         ofFileDialogResult result = ofSystemSaveDialog("doodle.txt","Je tekening wordt altijd opgeslagen in de doodles map.");
         if (result.bSuccess) save(result.getName());
+        ofSetFullscreen(true);
     }
 
     void save(string filename) {
@@ -566,7 +571,7 @@ public:
             case 'u': undo(); break;
             case 'c': case 'n': clear(); break;
             case 'h': ultimaker.physicalHomeXYZ(); break;
-            case 'T': ultimaker.setTemperature(220); break;
+            case 'T': ultimaker.setTemperature(desiredTemperature); break;
             case 't': ultimaker.readTemperature(); break;
             case 'r': ultimaker.setRelative(); break;
             case 'e': ultimaker.extrude(260,1000); break;
@@ -613,9 +618,14 @@ public:
         if (ofGetKeyPressed(OF_KEY_UP)) path.translate(ofPoint(0,-translateStep));
         if (ofGetKeyPressed(OF_KEY_DOWN)) path.translate(ofPoint(0,translateStep));
 
-        if (useUltimaker && ofGetFrameNum()==200) {
-            cout << "get temperature at frame 200" << endl;
+
+//        cout << useUltimaker << " " << ultimaker.isPrinting << " " << ofGetFrameNum() << " " << temperatureCheckEveryFrames << " " << (ofGetFrameNum()%temperatureCheckEveryFrames) << endl;
+        if (ofGetFrameNum()>0 && useUltimaker && !ultimaker.isPrinting && (ofGetFrameNum()%temperatureCheckEveryFrames)==0)  {
+            cout << "set+get temperature at frame: " << ofGetFrameNum() << endl;
+            ultimaker.setTemperature(desiredTemperature);
+//            ultimaker.flush();
             ultimaker.readTemperature();
+//            ultimaker.flush();
         }
     }
 
