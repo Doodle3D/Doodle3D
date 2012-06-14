@@ -61,7 +61,8 @@ public:
     float circleDetail;
     bool useUltimaker;
     ofPoint thermomask_position, opwarmen_position;
-    
+    bool lightweight;
+
     void setup() {
         cur=-1;
         isDrawing=false;
@@ -73,9 +74,10 @@ public:
         ofSetFullscreen(ini.get("fullscreen",true));
         ofSetFrameRate(ini.get("frameRate", 30));
         bg.loadImage("images/bg.png");
+        //bg.setImageType(OF_IMAGE_GRAYSCALE);
         bg_bezig.loadImage("images/bg-bezig.png");
         mask.loadImage("images/mask.png"); //hitareas
-        thermomask.loadImage("images/thermometer-sprite.png");
+        thermomask.loadImage("images/thermo-mask.png");
         krul.loadImage("images/krul.png");
         kruis.loadImage("images/kruis.png");
         opwarmen.loadImage("images/opwarmen.png");
@@ -83,14 +85,13 @@ public:
         path.setCurveResolution(100);
         path.setStrokeWidth(2);
         path.setStrokeColor(0);
-        ofSetBackgroundAuto(false);
-        ofEnableSmoothing();
-        ofEnableAlphaBlending();
+//        ofEnableSmoothing();
+//      ofEnableAlphaBlending();
 
         if (useUltimaker) {
             ultimaker.listDevices();
             if (ini.has("portnumber")) ultimaker.connect(ini.get("portnumber",0));
-            if (ini.has("portname")) ultimaker.connect(ini.get("portname","/dev/ttyUSB0"),0);
+            if (ini.has("portname")) ultimaker.connect(ini.get("portname","/dev/ttyUSB0"));
         }
 
         listDir();
@@ -109,8 +110,10 @@ public:
 
         setVerticalFunc(ini.get("verticalFunc", "$").at(0));
 
+        ofSetBackgroundAuto(!lightweight);
+
     }
-    
+
     void loadSettings() {
         ini.load("Doodle3D.ini");
         debug = ini.get("debug",false);
@@ -139,61 +142,30 @@ public:
         useUltimaker = ini.get("useUltimaker",true);
         thermomask_position = ini.get("thermomask.position",ofPoint());
         opwarmen_position = ini.get("opwarmen.position",ofPoint());
+        lightweight = ini.get("lightweight",false);
     }
 
-    void setVerticalFunc(char c) {
-        int minX=scaleBounds.x;
-        int maxX=scaleBounds.x+scaleBounds.width/2-20;
-        int minY=scaleBounds.y;
-        int maxY=scaleBounds.y+scaleBounds.height;
 
-        for (int i=minY; i<maxY; i++) {
-            float ii=ofNormalize(i, minY, maxY);
-            if (c=='|') func[i]=ofxLerp(minX,maxX,.5);
-            if (c=='\\') func[i]=ofMap(i,minY,maxY,minX,maxX);
-            if (c=='/') func[i]=ofMap(i,minY,maxY,maxX,minX);
-            if (c=='$') func[i]=ofMap(sin(ii*TWO_PI),-1,1,minX,maxX);
-            if (c=='#') func[i]=ofMap(sin(ii*2*TWO_PI),-1,1,minX,maxX);
-        }
-    }
-
-    void update() {
-        ofPoint center = ofxGetCenterOfMass(ofxGetPointsFromPath(path));
-        if (ofGetKeyPressed('-')) { path.translate(-center); path.scale(.97,.97); path.translate(center); }
-        if (ofGetKeyPressed('=')) { path.translate(-center); path.scale(1/.97,1/.97); path.translate(center); }
-        if (ofGetKeyPressed('[')) { path.translate(-center); path.rotate(-1,ofVec3f(0,0,1)); path.translate(center); }
-        if (ofGetKeyPressed(']')) { path.translate(-center); path.rotate(1,ofVec3f(0,0,1)); path.translate(center); }
-        if (ofGetKeyPressed(OF_KEY_LEFT)) path.translate(ofPoint(-translateStep,0));
-        if (ofGetKeyPressed(OF_KEY_RIGHT)) path.translate(ofPoint(translateStep,0));
-        if (ofGetKeyPressed(OF_KEY_UP)) path.translate(ofPoint(0,-translateStep));
-        if (ofGetKeyPressed(OF_KEY_DOWN)) path.translate(ofPoint(0,translateStep));
-
-        if (useUltimaker && ofGetFrameNum()==200) {
-            cout << "get temperature at frame 200" << endl;
-            ultimaker.readTemperature();
-        }
-    }
-
-    void listDir() {
-        dir.reset();
-        dir.listDir("doodles/");
-    }
 
     void draw() {
         ofSetColor(255);
-        if (ultimaker.isPrinting) bg_bezig.draw(0,0); else bg.draw(0,0);
+        if (ofGetFrameNum()==10) {
+            bg.draw(0,0);
+        }
+
+        //if (ultimaker.isPrinting) bg_bezig.draw(0,0); else bg.draw(0,0);
         ofFill();
         ofSetColor(255,0,0);
         ofRect(1110,531+ofMap(ultimaker.temperature,0,240,230,0,true),127,240);
         ofSetColor(255);
         thermomask.draw(thermomask_position);
 
-        if (ultimaker.temperature<desiredTemperature-3) {
-            //kruis.draw(0,0);
-            if (ultimaker.isPrinting) opwarmen.draw(opwarmen_position.x,opwarmen_position.y);
-        } else {
-            //krul.draw(0,0);
-        }
+//        if (ultimaker.temperature<desiredTemperature-3) {
+//            //kruis.draw(0,0);
+//            if (ultimaker.isPrinting) opwarmen.draw(opwarmen_position.x,opwarmen_position.y);
+//        } else {
+//            //krul.draw(0,0);
+//        }
 
         vector<ofSubPath> &subpaths = path.getSubPaths();
         if (subpaths.size()>0) path.draw(0,0);
@@ -595,7 +567,43 @@ public:
         }
     }
 
+ void setVerticalFunc(char c) {
+        int minX=scaleBounds.x;
+        int maxX=scaleBounds.x+scaleBounds.width/2-20;
+        int minY=scaleBounds.y;
+        int maxY=scaleBounds.y+scaleBounds.height;
 
+        for (int i=minY; i<maxY; i++) {
+            float ii=ofNormalize(i, minY, maxY);
+            if (c=='|') func[i]=ofxLerp(minX,maxX,.5);
+            if (c=='\\') func[i]=ofMap(i,minY,maxY,minX,maxX);
+            if (c=='/') func[i]=ofMap(i,minY,maxY,maxX,minX);
+            if (c=='$') func[i]=ofMap(sin(ii*TWO_PI),-1,1,minX,maxX);
+            if (c=='#') func[i]=ofMap(sin(ii*2*TWO_PI),-1,1,minX,maxX);
+        }
+    }
+
+    void update() {
+        ofPoint center = ofxGetCenterOfMass(ofxGetPointsFromPath(path));
+        if (ofGetKeyPressed('-')) { path.translate(-center); path.scale(.97,.97); path.translate(center); }
+        if (ofGetKeyPressed('=')) { path.translate(-center); path.scale(1/.97,1/.97); path.translate(center); }
+        if (ofGetKeyPressed('[')) { path.translate(-center); path.rotate(-1,ofVec3f(0,0,1)); path.translate(center); }
+        if (ofGetKeyPressed(']')) { path.translate(-center); path.rotate(1,ofVec3f(0,0,1)); path.translate(center); }
+        if (ofGetKeyPressed(OF_KEY_LEFT)) path.translate(ofPoint(-translateStep,0));
+        if (ofGetKeyPressed(OF_KEY_RIGHT)) path.translate(ofPoint(translateStep,0));
+        if (ofGetKeyPressed(OF_KEY_UP)) path.translate(ofPoint(0,-translateStep));
+        if (ofGetKeyPressed(OF_KEY_DOWN)) path.translate(ofPoint(0,translateStep));
+
+        if (useUltimaker && ofGetFrameNum()==200) {
+            cout << "get temperature at frame 200" << endl;
+            ultimaker.readTemperature();
+        }
+    }
+
+    void listDir() {
+        dir.reset();
+        dir.listDir("doodles/");
+    }
 
 }; //App
 
