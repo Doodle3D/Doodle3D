@@ -167,14 +167,14 @@ public:
         ofSetColor(255,0,0);
         ofRect(1110,531+ofMap(ultimaker.temperature,0,240,230,0,true),127,240);
         ofSetColor(255);
-        thermomask.draw(thermomask_position);
+//        thermomask.draw(thermomask_position);
 
-        if (ultimaker.temperature<desiredTemperature-3) {
-            kruis.draw(kruis_position);
-            if (ultimaker.isPrinting) opwarmen.draw(opwarmen_position.x,opwarmen_position.y);
-        } else {
-            krul.draw(krul_position);
-        }
+//        if (ultimaker.temperature<desiredTemperature-3) {
+//            kruis.draw(kruis_position);
+//            if (ultimaker.isPrinting) opwarmen.draw(opwarmen_position.x,opwarmen_position.y);
+//        } else {
+//            krul.draw(krul_position);
+//        }
 
         vector<ofSubPath> &subpaths = path.getSubPaths();
         if (subpaths.size()>0) path.draw(0,0);
