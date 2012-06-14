@@ -89,7 +89,7 @@ public:
         if (useUltimaker) {
             ultimaker.listDevices();
             if (ini.has("portnumber")) ultimaker.connect(ini.get("portnumber",0));
-            if (ini.has("portname")) ultimaker.connect(ini.get("portname","/dev/ttyUSB0"));
+            if (ini.has("portname")) ultimaker.connect(ini.get("portname","/dev/ttyUSB0"),0);
         }
 
         listDir();
