@@ -60,7 +60,8 @@ public:
     float useSubLayers;
     float circleDetail;
     bool useUltimaker;
-
+    ofPoint thermomask_position, opwarmen_position;
+    
     void setup() {
         cur=-1;
         isDrawing=false;
@@ -69,12 +70,12 @@ public:
 
         loadSettings();
         ofSetWindowPosition(0,0);
-        //ofSetFullscreen(true);
+        ofSetFullscreen(ini.get("fullscreen",true));
         ofSetFrameRate(ini.get("frameRate", 30));
         bg.loadImage("images/bg.png");
         bg_bezig.loadImage("images/bg-bezig.png");
         mask.loadImage("images/mask.png"); //hitareas
-        thermomask.loadImage("images/thermo-mask.png");
+        thermomask.loadImage("images/thermometer-sprite.png");
         krul.loadImage("images/krul.png");
         kruis.loadImage("images/kruis.png");
         opwarmen.loadImage("images/opwarmen.png");
@@ -89,7 +90,7 @@ public:
         if (useUltimaker) {
             ultimaker.listDevices();
             if (ini.has("portnumber")) ultimaker.connect(ini.get("portnumber",0));
-            if (ini.has("portname")) ultimaker.connect(ini.get("portname","/dev/ttyUSB0"));
+            if (ini.has("portname")) ultimaker.connect(ini.get("portname","/dev/ttyUSB0"),0);
         }
 
         listDir();
@@ -107,8 +108,9 @@ public:
         }
 
         setVerticalFunc(ini.get("verticalFunc", "$").at(0));
-    }
 
+    }
+    
     void loadSettings() {
         ini.load("Doodle3D.ini");
         debug = ini.get("debug",false);
@@ -135,6 +137,8 @@ public:
         useSubLayers = ini.get("useSubLayers",false);
         circleDetail = ini.get("circleDetail",60);
         useUltimaker = ini.get("useUltimaker",true);
+        thermomask_position = ini.get("thermomask.position",ofPoint());
+        opwarmen_position = ini.get("opwarmen.position",ofPoint());
     }
 
     void setVerticalFunc(char c) {
@@ -177,19 +181,19 @@ public:
 
     void draw() {
         ofSetColor(255);
-        //if (ultimaker.isPrinting) bg_bezig.draw(0,0); else bg.draw(0,0);
+        if (ultimaker.isPrinting) bg_bezig.draw(0,0); else bg.draw(0,0);
         ofFill();
         ofSetColor(255,0,0);
         ofRect(1110,531+ofMap(ultimaker.temperature,0,240,230,0,true),127,240);
         ofSetColor(255);
-        //thermomask.draw(0,0);
+        thermomask.draw(thermomask_position);
 
-//        if (ultimaker.temperature<desiredTemperature-3) {
-//            kruis.draw(0,0);
-//            if (ultimaker.isPrinting) opwarmen.draw(0,0);
-//        } else {
-//            krul.draw(0,0);
-//        }
+        if (ultimaker.temperature<desiredTemperature-3) {
+            //kruis.draw(0,0);
+            if (ultimaker.isPrinting) opwarmen.draw(opwarmen_position.x,opwarmen_position.y);
+        } else {
+            //krul.draw(0,0);
+        }
 
         vector<ofSubPath> &subpaths = path.getSubPaths();
         if (subpaths.size()>0) path.draw(0,0);

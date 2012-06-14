@@ -7,10 +7,10 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		1D3CD66915741D220065B318 /* ofxExtras.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 1D3CD66615741D220065B318 /* ofxExtras.cpp */; };
-		1D3CD66D157420D30065B318 /* ofxUltimaker.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 1D3CD66B157420D30065B318 /* ofxUltimaker.cpp */; };
-		1D3CD67215742C950065B318 /* ofxGCode.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 1D3CD66F15742C950065B318 /* ofxGCode.cpp */; };
-		1D3CD67815742D8C0065B318 /* ofxIniSettings.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 1D3CD67515742D8C0065B318 /* ofxIniSettings.cpp */; };
+		1D83E086158A505D005F0922 /* ofxIniSettings.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 1D83E07B158A505D005F0922 /* ofxIniSettings.cpp */; };
+		1D83E087158A505D005F0922 /* ofxGCode.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 1D83E07F158A505D005F0922 /* ofxGCode.cpp */; };
+		1D83E088158A505D005F0922 /* ofxExtras.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 1D83E083158A505D005F0922 /* ofxExtras.cpp */; };
+		1D83E08B158A530E005F0922 /* ofxUltimaker.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 1D83E08A158A530E005F0922 /* ofxUltimaker.cpp */; };
 		BBAB23CB13894F3D00AA2426 /* GLUT.framework in CopyFiles */ = {isa = PBXBuildFile; fileRef = BBAB23BE13894E4700AA2426 /* GLUT.framework */; };
 		E4328149138ABC9F0047C5CB /* openFrameworksDebug.a in Frameworks */ = {isa = PBXBuildFile; fileRef = E4328148138ABC890047C5CB /* openFrameworksDebug.a */; };
 		E45BE97B0E8CC7DD009D7055 /* AGL.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = E45BE9710E8CC7DD009D7055 /* AGL.framework */; };
@@ -60,18 +60,18 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
-		1D3CD66615741D220065B318 /* ofxExtras.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ofxExtras.cpp; sourceTree = "<group>"; };
-		1D3CD66715741D220065B318 /* ofxExtras.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ofxExtras.h; sourceTree = "<group>"; };
-		1D3CD66815741D220065B318 /* README */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = README; sourceTree = "<group>"; };
-		1D3CD66B157420D30065B318 /* ofxUltimaker.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ofxUltimaker.cpp; sourceTree = "<group>"; };
-		1D3CD66C157420D30065B318 /* ofxUltimaker.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ofxUltimaker.h; sourceTree = "<group>"; };
-		1D3CD66F15742C950065B318 /* ofxGCode.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ofxGCode.cpp; sourceTree = "<group>"; };
-		1D3CD67015742C950065B318 /* ofxGCode.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ofxGCode.h; sourceTree = "<group>"; };
-		1D3CD67115742C950065B318 /* README */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = README; sourceTree = "<group>"; };
-		1D3CD67415742D8C0065B318 /* install.xml */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xml; path = install.xml; sourceTree = "<group>"; };
-		1D3CD67515742D8C0065B318 /* ofxIniSettings.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ofxIniSettings.cpp; sourceTree = "<group>"; };
-		1D3CD67615742D8C0065B318 /* ofxIniSettings.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ofxIniSettings.h; sourceTree = "<group>"; };
-		1D3CD67715742D8C0065B318 /* README */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = README; sourceTree = "<group>"; };
+		1D83E07A158A505D005F0922 /* install.xml */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xml; path = install.xml; sourceTree = "<group>"; };
+		1D83E07B158A505D005F0922 /* ofxIniSettings.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ofxIniSettings.cpp; sourceTree = "<group>"; };
+		1D83E07C158A505D005F0922 /* ofxIniSettings.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ofxIniSettings.h; sourceTree = "<group>"; };
+		1D83E07D158A505D005F0922 /* README */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = README; sourceTree = "<group>"; };
+		1D83E07F158A505D005F0922 /* ofxGCode.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ofxGCode.cpp; sourceTree = "<group>"; };
+		1D83E080158A505D005F0922 /* ofxGCode.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ofxGCode.h; sourceTree = "<group>"; };
+		1D83E081158A505D005F0922 /* README */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = README; sourceTree = "<group>"; };
+		1D83E083158A505D005F0922 /* ofxExtras.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ofxExtras.cpp; sourceTree = "<group>"; };
+		1D83E084158A505D005F0922 /* ofxExtras.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ofxExtras.h; sourceTree = "<group>"; };
+		1D83E085158A505D005F0922 /* README */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = README; sourceTree = "<group>"; };
+		1D83E089158A5307005F0922 /* ofxUltimaker.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ofxUltimaker.h; sourceTree = "<group>"; };
+		1D83E08A158A530E005F0922 /* ofxUltimaker.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ofxUltimaker.cpp; sourceTree = "<group>"; };
 		BBAB23BE13894E4700AA2426 /* GLUT.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = GLUT.framework; path = ../../../libs/glut/lib/osx/GLUT.framework; sourceTree = "<group>"; };
 		E4328143138ABC890047C5CB /* openFrameworksLib.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = openFrameworksLib.xcodeproj; path = ../../../libs/openFrameworksCompiled/project/osx/openFrameworksLib.xcodeproj; sourceTree = SOURCE_ROOT; };
 		E45BE9710E8CC7DD009D7055 /* AGL.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AGL.framework; path = /System/Library/Frameworks/AGL.framework; sourceTree = "<absolute>"; };
@@ -118,57 +118,57 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
-		1D3CD66515741D220065B318 /* ofxExtras */ = {
+		1D83E078158A505D005F0922 /* ofxUltimaker */ = {
 			isa = PBXGroup;
 			children = (
-				1D3CD66615741D220065B318 /* ofxExtras.cpp */,
-				1D3CD66715741D220065B318 /* ofxExtras.h */,
-				1D3CD66815741D220065B318 /* README */,
-			);
-			name = ofxExtras;
-			path = ../../../addons/ofxExtras;
-			sourceTree = "<group>";
-		};
-		1D3CD66A157420D30065B318 /* ofxUltimaker */ = {
-			isa = PBXGroup;
-			children = (
-				1D3CD66B157420D30065B318 /* ofxUltimaker.cpp */,
-				1D3CD66C157420D30065B318 /* ofxUltimaker.h */,
+				1D83E08A158A530E005F0922 /* ofxUltimaker.cpp */,
+				1D83E089158A5307005F0922 /* ofxUltimaker.h */,
 			);
 			name = ofxUltimaker;
-			path = ../../../addons/ofxUltimaker;
+			path = addons/ofxUltimaker;
 			sourceTree = "<group>";
 		};
-		1D3CD66E15742C950065B318 /* ofxGCode */ = {
+		1D83E079158A505D005F0922 /* ofxIniSettings */ = {
 			isa = PBXGroup;
 			children = (
-				1D3CD66F15742C950065B318 /* ofxGCode.cpp */,
-				1D3CD67015742C950065B318 /* ofxGCode.h */,
-				1D3CD67115742C950065B318 /* README */,
-			);
-			name = ofxGCode;
-			path = ../../../addons/ofxGCode;
-			sourceTree = "<group>";
-		};
-		1D3CD67315742D8C0065B318 /* ofxIniSettings */ = {
-			isa = PBXGroup;
-			children = (
-				1D3CD67415742D8C0065B318 /* install.xml */,
-				1D3CD67515742D8C0065B318 /* ofxIniSettings.cpp */,
-				1D3CD67615742D8C0065B318 /* ofxIniSettings.h */,
-				1D3CD67715742D8C0065B318 /* README */,
+				1D83E07A158A505D005F0922 /* install.xml */,
+				1D83E07B158A505D005F0922 /* ofxIniSettings.cpp */,
+				1D83E07C158A505D005F0922 /* ofxIniSettings.h */,
+				1D83E07D158A505D005F0922 /* README */,
 			);
 			name = ofxIniSettings;
-			path = ../../../addons/ofxIniSettings;
+			path = addons/ofxIniSettings;
+			sourceTree = "<group>";
+		};
+		1D83E07E158A505D005F0922 /* ofxGCode */ = {
+			isa = PBXGroup;
+			children = (
+				1D83E07F158A505D005F0922 /* ofxGCode.cpp */,
+				1D83E080158A505D005F0922 /* ofxGCode.h */,
+				1D83E081158A505D005F0922 /* README */,
+			);
+			name = ofxGCode;
+			path = addons/ofxGCode;
+			sourceTree = "<group>";
+		};
+		1D83E082158A505D005F0922 /* ofxExtras */ = {
+			isa = PBXGroup;
+			children = (
+				1D83E083158A505D005F0922 /* ofxExtras.cpp */,
+				1D83E084158A505D005F0922 /* ofxExtras.h */,
+				1D83E085158A505D005F0922 /* README */,
+			);
+			name = ofxExtras;
+			path = addons/ofxExtras;
 			sourceTree = "<group>";
 		};
 		BB4B014C10F69532006C3DED /* addons */ = {
 			isa = PBXGroup;
 			children = (
-				1D3CD67315742D8C0065B318 /* ofxIniSettings */,
-				1D3CD66E15742C950065B318 /* ofxGCode */,
-				1D3CD66A157420D30065B318 /* ofxUltimaker */,
-				1D3CD66515741D220065B318 /* ofxExtras */,
+				1D83E078158A505D005F0922 /* ofxUltimaker */,
+				1D83E079158A505D005F0922 /* ofxIniSettings */,
+				1D83E07E158A505D005F0922 /* ofxGCode */,
+				1D83E082158A505D005F0922 /* ofxExtras */,
 			);
 			name = addons;
 			sourceTree = "<group>";
@@ -335,10 +335,10 @@
 			buildActionMask = 2147483647;
 			files = (
 				E4B69E200A3A1BDC003C02F2 /* main.cpp in Sources */,
-				1D3CD66915741D220065B318 /* ofxExtras.cpp in Sources */,
-				1D3CD66D157420D30065B318 /* ofxUltimaker.cpp in Sources */,
-				1D3CD67215742C950065B318 /* ofxGCode.cpp in Sources */,
-				1D3CD67815742D8C0065B318 /* ofxIniSettings.cpp in Sources */,
+				1D83E086158A505D005F0922 /* ofxIniSettings.cpp in Sources */,
+				1D83E087158A505D005F0922 /* ofxGCode.cpp in Sources */,
+				1D83E088158A505D005F0922 /* ofxExtras.cpp in Sources */,
+				1D83E08B158A530E005F0922 /* ofxUltimaker.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
