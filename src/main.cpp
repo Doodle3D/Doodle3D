@@ -83,7 +83,7 @@ public:
         path.setCurveResolution(100);
         path.setStrokeWidth(2);
         path.setStrokeColor(0);
-
+        ofSetBackgroundAuto(false);
         ofEnableSmoothing();
         ofEnableAlphaBlending();
 
