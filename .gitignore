@@ -4,3 +4,4 @@ bin/*.app/
 .sln
 .vcproj
 .vcproj.user
+.layout
