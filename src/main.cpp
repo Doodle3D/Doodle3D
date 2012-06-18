@@ -27,12 +27,9 @@ public:
     ofPath path,vPath;
     ofDirectory dir;
     ofxIniSettings ini;
-//    ofRectangle bounds,platform;
-//    ofPoint shift;
     string gateway;
     map<int,int> func;
 
-    //float temperature;
     bool debug;
     float screenToMillimeterScale;
     float scaleStep;
@@ -43,6 +40,7 @@ public:
     float flowrate;
     int layers;
     float layerHeight;
+    float wallThickness;
     float zOffset;
     float retract;
     int cur;
@@ -79,7 +77,6 @@ public:
         ofSetFullscreen(ini.get("fullscreen",true));
         ofSetFrameRate(ini.get("frameRate", 30));
         bg.loadImage("images/bg.png");
-        //bg.setImageType(OF_IMAGE_GRAYSCALE);
         bg_bezig.loadImage("images/bg-bezig.png");
         mask.loadImage("images/mask.png"); //hitareas
         thermomask.loadImage("images/thermo-mask.png");
@@ -93,13 +90,12 @@ public:
         if (!lightweight) ofEnableSmoothing();
         ofEnableAlphaBlending();
         ofBackground(255);
-        //ofDisableAlphaBlending();
 
         bool connected = false;
         if (useUltimaker) {
             ultimaker.listDevices();
-            if (ini.has("portnumber")) connected = ultimaker.connect(ini.get("portnumber",0));
-            if (ini.has("portname")) connected = ultimaker.connect(ini.get("portname","/dev/ttyUSB0"));
+            if (ini.has("portnumber")) connected = ultimaker.connect(ini.get("portnumber",0),ini.get("baudrate",115200));
+            if (ini.has("portname")) connected = ultimaker.connect(ini.get("portname","/dev/ttyUSB0"),ini.get("baudrate",115200));
             if (!connected) useUltimaker = false;
         }
 
@@ -130,11 +126,13 @@ public:
         scaleStep = ini.get("scaleStep",0.0f);
         rotationStep = ini.get("rotationStep",0.0f);
         translateStep = ini.get("translateStep",1.0f);
-        feedrate = ini.get("feedrate",4000);
-        travelrate = ini.get("travelrate",25000);
+        feedrate = ini.get("feedrate",35) * 60;
+        travelrate = ini.get("travelrate",100) * 60;
         flowrate = ini.get("flowrate",.8f);
-        layers = ini.get("layers",15);
+        //layers = ini.get("layers",15);
         layerHeight = ini.get("layerHeight",.3f);
+        layers = ini.get("objectHeight",40) / layerHeight;
+        wallThickness = ini.get("wallThickness",.8f);
         zOffset = ini.get("zOffset",0.0f);
         doSpiral = ini.get("doSpiral",false);
         spiralRadius = ini.get("spiralRadius",20);
@@ -154,15 +152,20 @@ public:
         krul_position = ini.get("krul.position",ofPoint());
         lightweight = ini.get("lightweight",false);
         temperatureCheckEveryFrames = ini.get("temperatureCheckEveryFrames",200);
+        ofSetEscapeQuitsApp(ini.get("quitOnEscape",true));
     }
 
 
 
     void draw() {
+        ultimaker.temperature = 230;
+        
         ofSetColor(255);
         if (!lightweight || redrawBg>-1) {
-            bg.draw(0,0);
+           bg.draw(0,0);
         }
+        
+//        ofBackground(255);
 
         //if (ultimaker.isPrinting) bg_bezig.draw(0,0); else bg.draw(0,0);
         ofFill();
@@ -251,6 +254,7 @@ public:
 
     float scaleFunction(float f) {
         if (func.size()==0) return 0;
+        if (f>=1) f=.999; //hack
 
         int y = ofxLerp(scaleBounds.y,scaleBounds.y+scaleBounds.height,f);
         int x = func.find(y)->second;
@@ -303,6 +307,15 @@ public:
 //            path.translate(ofxGetCenterOfMass(points));
 
             bool even = (layer%2==0);
+            
+            if (layer==0) {
+                gcode.add("M220 S80");
+            }
+            if (layer==1) {
+                gcode.add("M106");
+                gcode.add("M220 S100");
+                gcode.add("G92 Z"+ofToString(layerHeight));
+            }
 
             for (int j=0; j<subpaths.size(); j++) {
 
@@ -325,9 +338,9 @@ public:
                         from = commands[i>0?last-i+1:last].to; //volgende
                     }
 
-                    extruder += flowrate * from.distance(to);
+                    extruder += (from.distance(to) * screenToMillimeterScale) * wallThickness * layerHeight;
 
-                    float sublayer = layer + (useSubLayers ? float(i)/commands.size() : 0);
+                    float sublayer = layer==0 ? 0 : layer + (useSubLayers ? float(i)/commands.size() : 0);
 
                     gcode.addCommandWithParams("G1 X%03f Y%03f Z%03f F%03f E%03f",
                                                to.x, to.y,
@@ -393,7 +406,7 @@ public:
         //temp
         vector<ofPoint*> points = ofxGetPointsFromPath(path);
         if (points.size()<2) return;
-        bool isLoop = points.front()->distance(*points.back())<10;
+        bool isLoop = points.front()->distance(*points.back())<25;
         cout << filename << ", loop=" << isLoop << endl;
 
         ofxSimplifyPath(path);
@@ -455,6 +468,8 @@ public:
 
     void stop() {
         ultimaker.stopPrint();
+        ultimaker.request("G28 X0 Y0");
+//        ultimaker.request("M84");
         //ultimaker.load("end.gcode");
         //ultimaker.startPrint(); //start only end gcode
     }
@@ -561,11 +576,12 @@ public:
             case 'f': ofToggleFullscreen(); break;
             case 'm': make(); break;
             case OF_KEY_RETURN: case 'p': make(); break;
-            case 'M': ultimaker.stopPrint(); break;
+            //case 'M': ultimaker.stopPrint(); break;
             case 'l': loadNext(); break;
             case 'L': loadPrevious(); break;
             case '!': deleteCurrentFile(); break;
             case 'd': debug=!debug; break;
+            case 'o': load(); break;
             case 's': saveAs(); break;
             case 'S': save(); break;
             case 'u': undo(); break;
