@@ -5,3 +5,4 @@ bin/*.app/
 .vcproj
 .vcproj.user
 .layout
+release/

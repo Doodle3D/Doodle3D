@@ -1,662 +1,167 @@
+//openFrameworks & addons
+#include "ofMain.h"
 #include "ofxExtras.h"
-#include "ofxGCode.h"
-#include "ofxUltimaker.h"
 #include "ofxIniSettings.h"
-//#include "/Users/rick/Documents/openFrameworks/of007-osx/libs/glut/lib/osx/GLUT.framework/Headers/glut.h"
-
-#define useSerial true
-#define btnField 63231
-//#define btnMake 4044666
-#define btnLoad 15010445
-#define btnSave 0x19f672
-#define btnUndo 0xa6b2d0
-#define btnNieuw 0xfccf58
-#define btnPrev 8537941
-#define btnNext 8242102
-#define btnPrint 4044666
-#define btnStop 15075981
-#define btnLeftVertical 0xff0900
-#define btnRightVertical 0x003cff
-
-class App : public ofBaseApp {
-public:
-
-    ofImage bg,bg_bezig,mask,thermomask,krul,kruis,opwarmen;
-    ofxGCode gcode;
-    ofxUltimaker ultimaker;
-    ofPath path,vPath;
-    ofDirectory dir;
-    ofxIniSettings ini;
-    string gateway;
-    map<int,int> func;
-
-    bool debug;
-    float screenToMillimeterScale;
-    float scaleStep;
-    float rotationStep;
-    float translateStep;
-    float feedrate;
-    float travelrate;
-    float flowrate;
-    int layers;
-    float layerHeight;
-    float wallThickness;
-    float zOffset;
-    float retract;
-    int cur;
-    string autoLoadImage;
-    ofPoint offset;
-    int desiredTemperature;
-    bool isDrawing;
-    ofPoint clickPoint;
-    int clickAlpha,clickAlphaDecay;
-    float minScale,maxScale;
-    ofRectangle scaleBounds;
-    bool doSpiral;
-    bool isAdvanced;
-    float spiralRadius;
-    float useSubLayers;
-    float circleDetail;
-    bool useUltimaker;
-    ofPoint thermomask_position, opwarmen_position;
-    ofPoint kruis_position,krul_position;
-    bool lightweight;
-    int redrawBg;
-    int temperatureCheckEveryFrames;
-
-    void setup() {
-        cur=-1;
-        isDrawing=false;
-        redrawBg=false;
-        clickAlpha=0;
-        clickAlphaDecay=20;
-        redrawBg = 10; //timer
-
-        loadSettings();
-        ofSetWindowPosition(0,0);
-        ofSetFullscreen(ini.get("fullscreen",true));
-        ofSetFrameRate(ini.get("frameRate", 30));
-        bg.loadImage("images/bg.png");
-        bg_bezig.loadImage("images/bg-bezig.png");
-        mask.loadImage("images/mask.png"); //hitareas
-        thermomask.loadImage("images/thermo-mask.png");
-        krul.loadImage("images/krul.png");
-        kruis.loadImage("images/kruis.png");
-        opwarmen.loadImage("images/opwarmen.png");
-        path.setFilled(false);
-        path.setCurveResolution(100);
-        path.setStrokeWidth(2);
-        path.setStrokeColor(0);
-        if (!lightweight) ofEnableSmoothing();
-        ofEnableAlphaBlending();
-        ofBackground(255);
-
-        bool connected = false;
-        if (useUltimaker) {
-            ultimaker.listDevices();
-            if (ini.has("portnumber")) connected = ultimaker.connect(ini.get("portnumber",0),ini.get("baudrate",115200));
-            if (ini.has("portname")) connected = ultimaker.connect(ini.get("portname","/dev/ttyUSB0"),ini.get("baudrate",115200));
-            if (!connected) useUltimaker = false;
-        }
-
-        listDir();
-
-        if (autoLoadImage!="") {
-            cout << "autoload: " << autoLoadImage << endl;
-            for (cur=0; cur<dir.numFiles(); cur++) {
-                //cout << "file: " << dir.getName(cur) << endl;
-                if (dir.getName(cur)==autoLoadImage || dir.getPath(cur)==autoLoadImage) {
-                    //cout << "found" << endl;
-                    load(dir.getPath(cur));
-                    break;
-                }
-            }
-        }
-
-        setVerticalFunc(ini.get("verticalFunc", "$").at(0));
-
-        if (lightweight) ofSetBackgroundAuto(false);
-    }
-
-    void loadSettings() {
-        ini.load("Doodle3D.ini");
-        debug = ini.get("debug",false);
-        isAdvanced = ini.get("isAdvanced",true);
-        screenToMillimeterScale = ini.get("screenToMillimeterScale",0.3f);
-        scaleStep = ini.get("scaleStep",0.0f);
-        rotationStep = ini.get("rotationStep",0.0f);
-        translateStep = ini.get("translateStep",1.0f);
-        feedrate = ini.get("feedrate",35) * 60;
-        travelrate = ini.get("travelrate",100) * 60;
-        flowrate = ini.get("flowrate",.8f);
-        //layers = ini.get("layers",15);
-        layerHeight = ini.get("layerHeight",.3f);
-        layers = ini.get("objectHeight",40) / layerHeight;
-        wallThickness = ini.get("wallThickness",.8f);
-        zOffset = ini.get("zOffset",0.0f);
-        doSpiral = ini.get("doSpiral",false);
-        spiralRadius = ini.get("spiralRadius",20);
-        minScale = ini.get("minScale",0.5f);
-        maxScale = ini.get("maxScale",1.5f);
-        retract = ini.get("retract",50); //not used
-        autoLoadImage = ini.get("autoLoadImage","");
-        scaleBounds = ini.get("scaleBounds",ofRectangle(890,200,150,418));
-        offset = ini.get("offset",ofPoint(220,180));
-        desiredTemperature = ini.get("desiredTemperature",220);
-        useSubLayers = ini.get("useSubLayers",false);
-        circleDetail = ini.get("circleDetail",60);
-        useUltimaker = ini.get("useUltimaker",true);
-        thermomask_position = ini.get("thermomask.position",ofPoint());
-        opwarmen_position = ini.get("opwarmen.position",ofPoint());
-        kruis_position = ini.get("kruis.position",ofPoint());
-        krul_position = ini.get("krul.position",ofPoint());
-        lightweight = ini.get("lightweight",false);
-        temperatureCheckEveryFrames = ini.get("temperatureCheckEveryFrames",200);
-        ofSetEscapeQuitsApp(ini.get("quitOnEscape",true));
-    }
-
-
-
-    void draw() {
-        ultimaker.temperature = 230;
-        
-        ofSetColor(255);
-        if (!lightweight || redrawBg>-1) {
-           bg.draw(0,0);
-        }
-        
-//        ofBackground(255);
-
-        //if (ultimaker.isPrinting) bg_bezig.draw(0,0); else bg.draw(0,0);
-        ofFill();
-        ofSetColor(255,0,0);
-        float h = ultimaker.temperature; //ofMap(ultimaker.temperature,0,240,230,0,true);
-        ofRect(1110,775-h,127,h);
-        ofSetColor(255);
-        thermomask.draw(thermomask_position);
-
-        if (ultimaker.temperature<desiredTemperature-3) {
-            kruis.draw(kruis_position);
-            if (ultimaker.isPrinting) opwarmen.draw(opwarmen_position.x,opwarmen_position.y);
-        } else {
-            krul.draw(krul_position);
-        }
-
-        vector<ofSubPath> &subpaths = path.getSubPaths();
-        if (subpaths.size()>0) path.draw(0,0);
-        if (subpaths.size()>1) {
-            ofSetColor(200);
-            for (int i=0; i<subpaths.size()-1; i++) {
-                vector<ofSubPath::Command> &left = subpaths[i].getCommands();
-                vector<ofSubPath::Command> &right = subpaths[i+1].getCommands();
-                ofLine(left.back().to,right.front().to);
-            }
-        }
-
-        if (debug) {
-            vector<ofPoint*> points = ofxGetPointsFromPath(path);
-            ofSetColor(255,0,0);
-            ofNoFill();
-            ofRect(ofxGetBoundingBox(points));
-            ofFill();
-            ofCircle(ofxGetCenterOfMass(points),3);
-            ofSetColor(0,255,0);
-            ofCircle(ofxGetBoundingBox(points).getCenter(),3);
-
-            ofSetColor(0);
-            ofDrawBitmapString("file:" + ofToString(cur) + "/" + ofToString(dir.numFiles()),15,15);
-            ofDrawBitmapString(ofToString(ultimaker.temperature),1110+50,531+200);
-
-            ofSetColor(255,50);
-            mask.draw(0,0);
-        }
-
-        //vertical
-        if (isAdvanced) {
-            int d=876;
-            int dd=80;
-            ofSetColor(0);
-            ofLine(d,168,d,640);
-            ofLine(d+1,168,d+1,640);
-            ofSetColor(0,0,0);
-            ofNoFill();
-            ofSetLineWidth(2);
-
-            glBegin(GL_LINE_STRIP);
-            for (map<int,int>::iterator it=func.begin(); it!=func.end(); it++) {
-                int y = it->first;
-                int x = func[y];
-                glVertex2f(x,y);
-            }
-            glEnd();
-
-            glBegin(GL_LINE_STRIP);
-            for (map<int,int>::iterator it=func.begin(); it!=func.end(); it++) {
-                int y = it->first;
-                int x = func[y];
-                glVertex2f(960-(x-960),y);
-            }
-            glEnd();
-        }
-
-        //click feedback
-        if (!lightweight) {
-            ofSetLineWidth(1);
-            ofSetColor(255,clickAlpha);
-            ofFill();
-            ofCircle(clickPoint,clickAlpha/6);
-            if (clickAlpha>0) clickAlpha-=clickAlphaDecay;
-        }
-
-        redrawBg--;
-        if (redrawBg<0) redrawBg=-1;
-    }
-
-    float scaleFunction(float f) {
-        if (func.size()==0) return 0;
-        if (f>=1) f=.999; //hack
-
-        int y = ofxLerp(scaleBounds.y,scaleBounds.y+scaleBounds.height,f);
-        int x = func.find(y)->second;
-
-        return ofMap(x, scaleBounds.x, scaleBounds.x+scaleBounds.width,minScale,maxScale,true);
-    }
-
-    void make() {
-        cout << "make: frame=" << ofGetFrameNum() << endl;
-
-        ofPath tmpPath = path;
-
-        float extruder = 0;
-
-        gcode.lines.clear();
-        gcode.insert("gcode/start.gcode");
-
-        vector<ofSubPath> &subpaths = path.getSubPaths();
-
-        vector<ofPoint*> points = ofxGetPointsFromPath(path);
-        if (points.size()<2) return;
-
-        bool isLoop = points.front()->distance(*points.back())<10;
-
-        for (int layer=0; layer<layers; layer++) {
-
-            //reset
-            path = tmpPath;
-
-            points = ofxGetPointsFromPath(path);
-
-            //scale to machine dimensions
-            path.translate(-offset); //left corner of drawing field in pixels
-            path.translate(-ofxGetCenterOfMass(points));
-            path.scale(screenToMillimeterScale,-screenToMillimeterScale);
-//            path.translate(ofxGetCenterOfMass(points));
-
-            float layerScale = scaleFunction(float(layer)/layers);
-
-//            if (layer%25==0) {
-//                gcode.addCommandWithParams("M104 S%d",desiredTemperature);
-//            }
-
-            float angle=float(layer)/layers*TWO_PI;
-
-//            path.translate(-ofxGetCenterOfMass(points));
-            path.scale(layerScale,layerScale); //1+layer*scaleStep, 1+layer*scaleStep);
-            if (doSpiral) path.translate(ofPoint(spiralRadius*sin(angle),spiralRadius*cos(angle)));
-            path.rotate(layer*rotationStep,ofVec3f(0,0,1));
-//            path.translate(ofxGetCenterOfMass(points));
-
-            bool even = (layer%2==0);
-            
-            if (layer==0) {
-                gcode.add("M220 S80");
-            }
-            if (layer==1) {
-                gcode.add("M106");
-                gcode.add("M220 S100");
-                gcode.add("G92 Z"+ofToString(layerHeight));
-            }
-
-            for (int j=0; j<subpaths.size(); j++) {
-
-                vector<ofSubPath::Command> &commands = subpaths[even ? j : subpaths.size()-1-j].getCommands();
-
-                for (int i=0; i<commands.size(); i++) {
-                    int last = commands.size()-1;
-
-                    ofPoint from,to;
-
-                    if (isLoop) even = true; //overrule, don't go backwards
-
-                    if (isLoop && i==last) continue; //prevent double action
-
-                    if (even) {
-                        to = commands[i].to; //deze
-                        from = commands[i>0?i-1:0].to; //vorige
-                    } else {
-                        to = commands[last-i].to; //deze achterwaarts
-                        from = commands[i>0?last-i+1:last].to; //volgende
-                    }
-
-                    extruder += (from.distance(to) * screenToMillimeterScale) * wallThickness * layerHeight;
-
-                    float sublayer = layer==0 ? 0 : layer + (useSubLayers ? float(i)/commands.size() : 0);
-
-                    gcode.addCommandWithParams("G1 X%03f Y%03f Z%03f F%03f E%03f",
-                                               to.x, to.y,
-                                               sublayer*layerHeight+zOffset,
-                                               !isLoop && i==0 ? travelrate : feedrate,
-                                               extruder);
-                }
-            }
-        }
-
-        gcode.insert("gcode/end.gcode");
-        gcode.save("gcode/output.gcode");
-        print();
-
-        path = tmpPath;
-    }
-
-    void print() {
-        if (ofGetFrameNum()<210 || ultimaker.isBusy) return;
-        ultimaker.load("gcode/output.gcode");
-        ultimaker.startPrint();
-    }
-
-    void loadPrevious() {
-        cur = (cur-1+dir.numFiles()) % dir.numFiles();
-        load(dir.getPath(cur));
-    }
-
-    void loadNext() {
-        cur = (cur+1+dir.numFiles()) % dir.numFiles();
-        load(dir.getPath(cur));
-    }
-
-    void deleteCurrentFile() {
-        ofFile f(dir.getPath(cur));
-        f.remove();
-        listDir();
-        load(dir.getPath(cur)); //reload the thing on place cur
-    }
-
-    void load() {
-        ofFileDialogResult result = ofSystemLoadDialog();
-        if (result.bSuccess) load(result.getPath());
-    }
-
-    void load(string filename) {
-        if (!ofxFileExists(filename)) return; //file not existing or removed
-        clear(); //path.clear();
-        vector<string> lines = ofxLoadStrings(filename);
-        for (int i=0; i<lines.size(); i++) {
-            vector<string> coords = ofSplitString(lines[i], " ");
-            for (int j=0; j<coords.size(); j++) {
-                vector<string> tuple = ofSplitString(coords[j], ",");
-                if (tuple.size()!=2) return; //error in textfile
-                float x = ofToFloat(tuple[0]);
-                float y = ofToFloat(tuple[1]);
-                ofPoint p = ofPoint(x,y); // + ofPoint(bounds.x, bounds.y);
-                if (j==0) path.moveTo(p.x,p.y);
-                else path.lineTo(p.x,p.y);
-            }
-        }
-
-        //temp
-        vector<ofPoint*> points = ofxGetPointsFromPath(path);
-        if (points.size()<2) return;
-        bool isLoop = points.front()->distance(*points.back())<25;
-        cout << filename << ", loop=" << isLoop << endl;
-
-        ofxSimplifyPath(path);
-    }
-
-    void save() {
-        if (cur>-1 && cur<dir.numFiles()) {
-            save(dir.getName(cur));
-        } else {
-            saveAs();
-        }
-    }
-
-    void saveAs() {
-        //ofSetFullscreen(false);
-        ofFileDialogResult result = ofSystemSaveDialog("doodle.txt","Je tekening wordt altijd opgeslagen in de doodles map.");
-        if (result.bSuccess) save(result.getName());
-        ofSetFullscreen(true);
-    }
-
-    void save(string filename) {
-        vector<string> lines;
-        vector<ofSubPath> &subpaths = path.getSubPaths();
-        for (int i=0; i<subpaths.size(); i++) {
-            string line;
-            vector<ofSubPath::Command> &commands = subpaths[i].getCommands();
-            for (int j=0; j<commands.size(); j++) {
-                ofPoint p = commands[j].to; // - ofPoint(bounds.x, bounds.y);
-                line+=ofToString(p.x) + "," + ofToString(p.y) + " ";
-            }
-            lines.push_back(line);
-        }
-        ofxSaveStrings("doodles/" + filename,lines); //will only save file in data/doodles/ folder
-        listDir();
-        cout << "saved: " << filename << endl;
-    }
-
-    void undo() {
-        vector<ofSubPath> &subpaths = path.getSubPaths();
-        if (subpaths.size()<1) return;
-        vector<ofSubPath::Command> &commands = subpaths.back().getCommands();
-        if (commands.size()<=1) {
-            subpaths.erase(subpaths.end());
-            return;
-        }
-        commands.erase(commands.end());
-        if (commands.size()<=1) {
-            subpaths.erase(subpaths.end());
-        }
-        path.flagShapeChanged();
-        redrawBg = true;
-    }
-
-    void clear() {
-        path.clear();
-        path.flagShapeChanged();
-        redrawBg = true;
-    }
-
-    void stop() {
-        ultimaker.stopPrint();
-        ultimaker.request("G28 X0 Y0");
-//        ultimaker.request("M84");
-        //ultimaker.load("end.gcode");
-        //ultimaker.startPrint(); //start only end gcode
-    }
-
-    void mousePressed(int x, int y, int button) {
-        if (!mask.getColor(x,y).getHex()==btnField) {
-            clickPoint.set(x,y);
-            clickAlpha=150;
-        }
-
-        bool hitLeft = mask.getColor(x,y).getHex()==btnLeftVertical;
-        bool hitRight = mask.getColor(x,y).getHex()==btnRightVertical;
-        if (isAdvanced && (hitLeft || hitRight)) func.clear();
-
-        switch (mask.getColor(x,y).getHex()) {
-            case btnField: path.moveTo(x,y); isDrawing=true; break;
-            case btnPrint: make(); break;
-            case btnLoad: loadNext(); break;
-            case btnSave: saveAs(); break;
-            case btnUndo: undo(); break;
-            case btnNieuw: clear(); break;
-            case btnPrev: loadPrevious(); break;
-            case btnNext: loadNext(); break;
-            case btnStop: stop(); break;
-            default: break;
-        }
-
-    }
-
-    void mouseMoved(int x, int y) {
-
-    }
-
-    void mouseDragged(int x, int y, int button) {
-        bool hitField = mask.getColor(x,y).getHex()==btnField;
-        bool hitLeft = mask.getColor(x,y).getHex()==btnLeftVertical;
-        bool hitRight = mask.getColor(x,y).getHex()==btnRightVertical;
-        bool hasMouseMoved = ofGetMouseX()!=ofGetPreviousMouseX() || ofGetMouseY()!=ofGetPreviousMouseY();
-        bool hitLargeField = !isAdvanced && (hitLeft || hitRight);
-
-        if (hasMouseMoved && (hitField || hitLargeField)) {
-            if (isDrawing) path.lineTo(x,y);
-        }
-
-        if (isAdvanced && (hitLeft || hitRight)) {
-
-            int x = ofGetMouseX();
-            int y = ofGetMouseY();
-            int py = ofGetPreviousMouseY();
-
-            if (hitRight) x=960-(x-960);
-            if (x>950) x=950;
-
-            if (!scaleBounds.inside(x,y)) return;
-            if (!scaleBounds.inside(x,py)) return;
-
-            float minY = min(y,py);
-            float maxY = max(y,py);
-
-            func[ofGetMouseY()] = x;
-
-            if (fabs(minY-maxY) < FLT_EPSILON) maxY=minY+1; //prevent /0
-
-            for (int i=minY; i<=maxY; i++) {
-                func[i] = ofMap(i, minY, maxY, func[minY], func[maxY]);
-                func[i] = ofClamp(func[i],scaleBounds.x, scaleBounds.x+scaleBounds.width);
-            }
-        }
-    }
-
-    void mouseReleased(int x, int y, int button) {
-        ofxSimplifyPath(path);
-
-        //smooth vertical func
-        if (isAdvanced) {
-            for (int i=0; i<20; i++) {
-                int px=func.begin()->second;
-                for (map<int,int>::iterator it=func.begin(); it!=func.end(); it++) {
-                    int y = it->first;
-                    int x = it->second;
-                    if (abs(px-x)>1) x=(x+px)/2;
-                    func[y] = x;
-                    px=x;
-                }
-            }
-        }
-        isDrawing=false;
-    }
-
-    void createCircle() {
-        for (float i=0,n=circleDetail; i<=n; i++) {
-            float ii=float(i)/n;
-            float x=100*sin(ii*TWO_PI)+500;
-            float y=100*cos(ii*TWO_PI)+400;
-            if (i==0) path.moveTo(x,y); else path.lineTo(x,y);
-        }
-//        path.setArcResolution(64);
-//        path.arc(400, 400, 100, 100, 0, 360);
-//        path.flagShapeChanged();
-    }
-
-    void keyPressed(int key) {
-        switch (key) {
-            case 'f': ofToggleFullscreen(); break;
-            case 'm': make(); break;
-            case OF_KEY_RETURN: case 'p': make(); break;
-            //case 'M': ultimaker.stopPrint(); break;
-            case 'l': loadNext(); break;
-            case 'L': loadPrevious(); break;
-            case '!': deleteCurrentFile(); break;
-            case 'd': debug=!debug; break;
-            case 'o': load(); break;
-            case 's': saveAs(); break;
-            case 'S': save(); break;
-            case 'u': undo(); break;
-            case 'c': case 'n': clear(); break;
-            case 'h': ultimaker.physicalHomeXYZ(); break;
-            case 'T': ultimaker.setTemperature(desiredTemperature); break;
-            case 't': ultimaker.readTemperature(); break;
-            case 'r': ultimaker.setRelative(); break;
-            case 'e': ultimaker.extrude(260,1000); break;
-            case 'q': stop(); break;
-            case 'R': rotationStep=!rotationStep; break;
-            case 'K': if (scaleStep==0) scaleStep=-0.005; else scaleStep=0; break;
-            case 'b': ultimaker.isPrinting = !ultimaker.isPrinting; break;
-            case 'a': isAdvanced=!isAdvanced; break;
-            case 'C': createCircle(); break;
-            case '*': loadSettings(); break;
-            case '&': lightweight=!lightweight; break;
-            case '/':
-            case '\\':
-            case '$':
-            case '#':
-            case '|': setVerticalFunc(key); break;
-        }
-    }
-
- void setVerticalFunc(char c) {
-        int minX=scaleBounds.x;
-        int maxX=scaleBounds.x+scaleBounds.width/2-20;
-        int minY=scaleBounds.y;
-        int maxY=scaleBounds.y+scaleBounds.height;
-
-        for (int i=minY; i<maxY; i++) {
-            float ii=ofNormalize(i, minY, maxY);
-            if (c=='|') func[i]=ofxLerp(minX,maxX,.5);
-            if (c=='\\') func[i]=ofMap(i,minY,maxY,minX,maxX);
-            if (c=='/') func[i]=ofMap(i,minY,maxY,maxX,minX);
-            if (c=='$') func[i]=ofMap(sin(ii*TWO_PI),-1,1,minX,maxX);
-            if (c=='#') func[i]=ofMap(sin(ii*2*TWO_PI),-1,1,minX,maxX);
-        }
-    }
-
-    void update() {
-        ofPoint center = ofxGetCenterOfMass(ofxGetPointsFromPath(path));
-        if (ofGetKeyPressed('-')) { path.translate(-center); path.scale(.97,.97); path.translate(center); }
-        if (ofGetKeyPressed('=')) { path.translate(-center); path.scale(1/.97,1/.97); path.translate(center); }
-        if (ofGetKeyPressed('[')) { path.translate(-center); path.rotate(-1,ofVec3f(0,0,1)); path.translate(center); }
-        if (ofGetKeyPressed(']')) { path.translate(-center); path.rotate(1,ofVec3f(0,0,1)); path.translate(center); }
-        if (ofGetKeyPressed(OF_KEY_LEFT)) path.translate(ofPoint(-translateStep,0));
-        if (ofGetKeyPressed(OF_KEY_RIGHT)) path.translate(ofPoint(translateStep,0));
-        if (ofGetKeyPressed(OF_KEY_UP)) path.translate(ofPoint(0,-translateStep));
-        if (ofGetKeyPressed(OF_KEY_DOWN)) path.translate(ofPoint(0,translateStep));
-
-
-//        cout << useUltimaker << " " << ultimaker.isPrinting << " " << ofGetFrameNum() << " " << temperatureCheckEveryFrames << " " << (ofGetFrameNum()%temperatureCheckEveryFrames) << endl;
-        if (ofGetFrameNum()>0 && useUltimaker && !ultimaker.isPrinting && (ofGetFrameNum()%temperatureCheckEveryFrames)==0)  {
-            cout << "set+get temperature at frame: " << ofGetFrameNum() << endl;
-            ultimaker.setTemperature(desiredTemperature);
-//            ultimaker.flush();
-            ultimaker.readTemperature();
-//            ultimaker.flush();
-        }
-    }
-
-    void listDir() {
-        dir.reset();
-        dir.listDir("doodles/");
-    }
-
-}; //App
-
-int main() {
-    ofAppGlutWindow window;
-    //window.setGlutDisplayString("rgba double samples>=4");
-    ofSetupOpenGL(&window, 1280, 800, OF_WINDOW);
-    ofRunApp(new App());
+#include "ofxUltimaker.h"
+
+//globals
+ofPath path;
+ofImage mask;
+ofxIniSettings ini;
+ofxUltimaker ultimaker;
+ofxGCode gcode;
+const int vres=500;
+float vfunc[vres],twists,objectHeight,layerHeight;
+float minScale,maxScale,maxScaleDifference,maxObjectHeight;
+int targetTemperature=220;
+bool debug=false;
+
+float scaleFunction(float f) {
+    return vfunc[int(ofMap(f, 0, 1, vres-1, 0, true))];
 }
 
+//classes
+#include "Btn.h"
+#include "Canvas.h"
+#include "Files.h"
+#include "Side.h"
+#include "Thermometer.h"
+#include "Printer.h"
 
+ofxBeginApp();
+
+//application properties
+ofImage bg,bg_busy,vb;
+Btn btnNew,btnSave,btnOops,btnLoadPrevious,btnLoadNext,btnPrint,btnStop;
+Files files;
+Canvas canvas;
+Side side;
+Thermometer thermometer;
+Printer printer;
+
+void setup() {
+    loadSettings();
+    btnNew.setup(0xfccf58);
+    btnSave.setup(0x19f672);
+    btnOops.setup(0xa6b2d0);
+    btnLoadPrevious.setup(8537941);
+    btnLoadNext.setup(8242102);
+    btnPrint.setup(4044666);
+    btnStop.setup(15075981);
+    thermometer.setup();
+    canvas.setup();
+    files.setup();
+    printer.setup();
+    bg.loadImage("images/bg.png");
+    bg_busy.loadImage("images/bg_busy.png");
+    mask.loadImage("images/mask.png");
+    
+    ofEnableAlphaBlending();
+    ofSetWindowPosition(0,0);
+    ofSetFullscreen(ini.get("fullscreen",true));
+    ofSetFrameRate(ini.get("frameRate", 30));
+    ofSetEscapeQuitsApp(ini.get("quitOnEscape",true));
+    
+    ultimaker.autoConnect();
+}
+
+void update() {
+    canvas.update();
+    
+    if (ofGetFrameNum()==100) {
+        ultimaker.send("M104 S" + ofToString(targetTemperature));
+    }
+}
+
+void draw() {
+    ofSetupScreenOrtho(0,0,OF_ORIENTATION_UNKNOWN,true,-200,200);
+    ofSetColor(255);
+    bg.draw(0,0);
+    canvas.draw();
+    if (debug) canvas.drawDebug();
+    side.draw();
+    thermometer.draw();
+}
+
+void loadSettings() {
+    ini.load("Doodle3D.ini");
+    targetTemperature = ini.get("targetTemperature",220);
+    objectHeight = ini.get("objectHeight",40);
+    maxObjectHeight = ini.get("maxObjectHeight",200);
+    layerHeight = ini.get("layerHeight",.2f);
+    minScale=ini.get("minScale",.8f);
+    maxScale=ini.get("maxScale",1.2f);        
+    side.setShape(ini.get("shape","|").at(0));
+    maxScaleDifference=ini.get("maxScaleDifference",.1f); //problematic when resolution>layers. should be half of wallThickness or so.
+    side.visible = ini.get("side.visible",true);
+    side.is3D = ini.get("side.is3D",false);
+    side.bounds = ini.get("side.bounds",ofRectangle(900,210,131,390));
+    side.border = ini.get("side.border",ofRectangle(880,170,2,470));
+}
+
+void stop() {
+    ultimaker.stopPrint();
+    ultimaker.request("G28 X0 Y0"); //home x,y
+}
+
+void mousePressed(int x, int y, int button) {
+    canvas.mousePressed(x, y, button);
+    side.mousePressed(x, y, button);
+    if (btnNew.hitTest(x,y)) canvas.clear();
+    if (btnSave.hitTest(x,y)) files.save();
+    if (btnLoadPrevious.hitTest(x,y)) files.loadPrevious();
+    if (btnLoadNext.hitTest(x,y)) files.loadNext();
+    if (btnPrint.hitTest(x,y)) printer.print();
+    if (btnStop.hitTest(x,y)) stop();
+}
+
+void mouseDragged(int x, int y, int button) {
+    canvas.mouseDragged(x, y, button);
+    side.mouseDragged(x, y, button);
+}
+
+void mouseReleased(int x, int y, int button) {
+    ofxSimplifyPath(path);
+    side.mouseReleased(x, y, button);
+    canvas.mouseReleased(x, y, button);
+}
+
+void keyPressed(int key) {
+    switch (key) {
+        case 'f': ofToggleFullscreen(); break;
+        case 'p': case 'm': case OF_KEY_RETURN: printer.print(); break;
+        case 'l': files.loadNext(); break;
+        case 'L': files.loadPrevious(); break;
+        case '~': files.deleteCurrentFile(); break;
+        case 'd': debug=!debug; break;
+        case 'o': files.load(); break;
+        case 's': files.saveAs(); break;
+        case 'S': files.save(); break;
+        case 'u': case 'z': canvas.undo(); break;
+        case 'c': case 'n': canvas.clear(); break;
+        case 't': ultimaker.readTemperature(); break;
+        case 'r': ultimaker.setRelative(); break;
+        case 'e': ultimaker.extrude(260,1000); break;
+        case 'q': stop(); break;
+        case 'a': side.toggle(); break;
+        case 'C': canvas.createCircle(); break;
+        case '*': loadSettings(); break;
+        case '<': twists-=.01; break;
+        case '>': twists+=.01; break;
+        case 'h': objectHeight++; if (objectHeight>maxObjectHeight) objectHeight=maxObjectHeight; break;
+        case 'H': objectHeight--; if (objectHeight<3) objectHeight=3; break;
+        case '3': side.is3D=!side.is3D; break;
+        case '/': case '\\': case '$': case '#': case '|': case '%': case '@': case '^': side.setShape(key); break;
+    }
+}
+
+ofxEndApp();
+
+int main() {   
+    ofAppGlutWindow window;
+    window.setGlutDisplayString("rgba double samples>=4");
+    ofSetupOpenGL(&window, 1280, 800, OF_WINDOW);
+    ofRunApp(new ofApp);
+}
+
+  

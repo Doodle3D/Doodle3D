@@ -60,6 +60,12 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		1D09096415926DF8000DE10D /* Thermometer.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Thermometer.h; sourceTree = "<group>"; };
+		1D09096515926E92000DE10D /* Btn.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Btn.h; sourceTree = "<group>"; };
+		1D090984159307F1000DE10D /* Canvas.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Canvas.h; sourceTree = "<group>"; };
+		1D0909851593097C000DE10D /* Side.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Side.h; sourceTree = "<group>"; };
+		1D09098615931547000DE10D /* Files.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Files.h; sourceTree = "<group>"; };
+		1D09098815931954000DE10D /* Printer.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Printer.h; sourceTree = "<group>"; };
 		1D83E07A158A505D005F0922 /* install.xml */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xml; path = install.xml; sourceTree = "<group>"; };
 		1D83E07B158A505D005F0922 /* ofxIniSettings.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ofxIniSettings.cpp; sourceTree = "<group>"; };
 		1D83E07C158A505D005F0922 /* ofxIniSettings.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ofxIniSettings.h; sourceTree = "<group>"; };
@@ -234,6 +240,12 @@
 			isa = PBXGroup;
 			children = (
 				E4B69E1D0A3A1BDC003C02F2 /* main.cpp */,
+				1D09098615931547000DE10D /* Files.h */,
+				1D0909851593097C000DE10D /* Side.h */,
+				1D09096415926DF8000DE10D /* Thermometer.h */,
+				1D090984159307F1000DE10D /* Canvas.h */,
+				1D09096515926E92000DE10D /* Btn.h */,
+				1D09098815931954000DE10D /* Printer.h */,
 			);
 			path = src;
 			sourceTree = SOURCE_ROOT;
