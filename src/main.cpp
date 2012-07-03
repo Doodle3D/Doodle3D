@@ -15,6 +15,7 @@ float vfunc[vres],twists,objectHeight,layerHeight;
 float minScale,maxScale,maxScaleDifference,maxObjectHeight;
 int targetTemperature=220;
 bool debug=false;
+bool useSubpathColors=false;
 
 float scaleFunction(float f) {
     return vfunc[int(ofMap(f, 0, 1, vres-1, 0, true))];
@@ -97,6 +98,7 @@ void loadSettings() {
     side.is3D = ini.get("side.is3D",false);
     side.bounds = ini.get("side.bounds",ofRectangle(900,210,131,390));
     side.border = ini.get("side.border",ofRectangle(880,170,2,470));
+    useSubpathColors = ini.get("useSubpathColors",false);
 }
 
 void stop() {
@@ -128,30 +130,31 @@ void mouseReleased(int x, int y, int button) {
 
 void keyPressed(int key) {
     switch (key) {
-        case 'f': ofToggleFullscreen(); break;
-        case 'p': case 'm': case OF_KEY_RETURN: printer.print(); break;
-        case 'l': files.loadNext(); break;
-        case 'L': files.loadPrevious(); break;
-        case '~': files.deleteCurrentFile(); break;
-        case 'd': debug=!debug; break;
-        case 'o': files.load(); break;
-        case 's': files.saveAs(); break;
-        case 'S': files.save(); break;
-        case 'u': case 'z': canvas.undo(); break;
-        case 'c': case 'n': canvas.clear(); break;
-        case 't': ultimaker.readTemperature(); break;
-        case 'r': ultimaker.setRelative(); break;
-        case 'e': ultimaker.extrude(260,1000); break;
-        case 'q': stop(); break;
-        case 'a': side.toggle(); break;
-        case 'C': canvas.createCircle(); break;
         case '*': loadSettings(); break;
+        case '/': case '\\': case '$': case '#': case '|': case '%': case '@': case '^': side.setShape(key); break;
+        case '3': side.is3D=!side.is3D; break;
         case '<': twists-=.01; break;
         case '>': twists+=.01; break;
+        case 'a': side.toggle(); break;
+        case 'b': useSubpathColors=!useSubpathColors; break;
+        case 'C': canvas.createCircle(); break;
+        case 'c': case 'n': canvas.clear(); break;
+        case 'd': debug=!debug; break;
+        case 'e': ultimaker.extrude(260,1000); break;
+        case 'f': ofToggleFullscreen(); break;
         case 'h': objectHeight++; if (objectHeight>maxObjectHeight) objectHeight=maxObjectHeight; break;
         case 'H': objectHeight--; if (objectHeight<3) objectHeight=3; break;
-        case '3': side.is3D=!side.is3D; break;
-        case '/': case '\\': case '$': case '#': case '|': case '%': case '@': case '^': side.setShape(key); break;
+        case 'l': files.loadNext(); break;
+        case 'L': files.loadPrevious(); break;
+        case 'o': files.load(); break;
+        case 'p': case 'm': case OF_KEY_RETURN: printer.print(); break;
+        case 'q': stop(); break;
+        case 'r': ultimaker.setRelative(); break;
+        case 'S': files.save(); break;
+        case 's': files.saveAs(); break;
+        case 't': ultimaker.readTemperature(); break;
+        case 'u': case 'z': canvas.undo(); break;
+        case '~': files.deleteCurrentFile(); break;
     }
 }
 

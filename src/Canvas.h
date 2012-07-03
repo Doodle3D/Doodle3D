@@ -25,21 +25,23 @@ public:
         ofTranslate(bounds.x,bounds.y);
         
         vector<ofSubPath> &subpaths = path.getSubPaths();
-        for (int i=0; i<subpaths.size(); i++) {
-            vector<ofSubPath::Command> &commands = subpaths[i].getCommands();
-            ofNoFill();
-            ofSetLineWidth(2);
-            ofSetColor(ofColor::fromHsb(float(i)/subpaths.size()*255, 255, 255));
-            ofBeginShape();
-            for (int j=0; j<commands.size(); j++) {
-                ofVertex(commands[j].to.x, commands[j].to.y);
+
+        if (useSubpathColors) {
+            for (int i=0; i<subpaths.size(); i++) {
+                vector<ofSubPath::Command> &commands = subpaths[i].getCommands();
+                ofNoFill();
+                ofSetLineWidth(2);
+                ofSetColor(ofColor::fromHsb(float(i)/subpaths.size()*255, 255, 255));
+                ofBeginShape();
+                for (int j=0; j<commands.size(); j++) {
+                    ofVertex(commands[j].to.x, commands[j].to.y);
+                }
+                ofEndShape();
             }
-            ofEndShape();
-        }        
-        //vector<ofPoint*> points = ofxGetPointsFromPath(path);
-        //if (subpaths.size()>0) {
-            
-        //} //path.draw(0,0);
+        } else {
+            if (subpaths.size()>0) path.draw(0,0);
+        }
+        
         if (subpaths.size()>1) {
             ofSetColor(200);
             for (int i=0; i<subpaths.size()-1; i+=2) {
