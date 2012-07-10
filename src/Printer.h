@@ -11,16 +11,12 @@ public:
     float zOffset;
     float useSubLayers;
     float filamentThickness;
+    float minimalDistanceForRetraction;
+    float retraction;
+    float retractionSpeed;
     
     void setup() {
-        screenToMillimeterScale=ini.get("screenToMillimeterScale",.3f);
-        feedrate = ini.get("speed",35)*60;
-        travelrate = ini.get("travelrate",250)*60;
-        wallThickness = ini.get("wallThickness",.8f);
-        zOffset = ini.get("zOffset",0.0f);
-        useSubLayers = ini.get("useSubLayers",true);
-        twists = ini.get("twists",0.0f);
-        filamentThickness = ini.get("filamentThickness",2.89f)/10; ////waarom /10 ????
+        //settings loaded in loadSettings
     }
     
     void print() {
@@ -29,32 +25,51 @@ public:
         gcode.lines.clear();
         gcode.insert("gcode/start.gcode");
         
-        int layers = objectHeight / layerHeight;
+        int layers = maxObjectHeight / layerHeight; //maxObjectHeight instead of objectHeight
+
+        cout << "objectHeight = " << objectHeight << endl;
+        cout << "layerHeight = " << layerHeight << endl;
+        cout << "numLayers = " << layers << endl;
+        
         float extruder = 0;
+        ofPoint prev;
 
         for (int layer=0; layer<layers; layer++) {
             ofPath p = path;
+            
             vector<ofSubPath> &subpaths = p.getSubPaths();
             vector<ofPoint*> points = ofxGetPointsFromPath(p);
         
             if (points.size()<2) return;
             bool even = (layer%2==0);
             float progress=float(layer)/layers;
-            float layerScale = scaleFunction(float(layer)/layers); //hier nog corrigeren voor objectHeight vs maxObjectHeight?
-            bool isLoop = points.front()->distance(*points.back())<10;
+            float layerScale = scaleFunction(float(layer)/layers);
+            bool isLoop = points.front()->distance(*points.back())<3;
             
             p.translate(-ofxGetCenterOfMass(points));
             p.scale(screenToMillimeterScale,-screenToMillimeterScale);
             p.scale(layerScale,layerScale);
             p.rotate(twists*progress*360,ofVec3f(0,0,1));
-                        
+
+            float simplifyIterationsDuringPrint = ini.get("simplifyIterationsDuringPrint",10);
+            float simplifyDistanceDuringPrint = ini.get("simplifyDistanceDuringPrint",0.0f);
+            if (simplifyDistanceDuringPrint!=0) ofxSimplifyPath(p,simplifyIterationsDuringPrint,10,simplifyDistanceDuringPrint); //10 iterations, leave minimal 10 points, otherwise max distance of ...mm
+            
+            subpaths = p.getSubPaths();
+            points = ofxGetPointsFromPath(p);
+            
             if (layer==0) {
-                gcode.add("M220 S80"); //slow speed
+                if (ini.get("firstLayerSlow",true)) gcode.add("M220 S80"); //slow speed
             } else if (layer==1) {
                 gcode.add("M106");      //fan on
                 gcode.add("M220 S100"); //normal speed
-                gcode.add("G92 Z"+ofToString(layerHeight)); //??
+                //gcode.add("G92 Z"+ofToString(layerHeight)); //??
             }
+            
+            int curLayerCommand=0;
+            int totalLayerCommands=points.size();
+                        
+            //cout << layerScale << endl;
             
             for (int j=0; j<subpaths.size(); j++) {
                 
@@ -63,29 +78,44 @@ public:
                 for (int i=0; i<commands.size(); i++) {
                     int last = commands.size()-1;
                     
-                    ofPoint from,to;
+                    //ofPoint from,
+                    ofPoint to;
                                         
-                    if (isLoop && i==last) continue; //prevent double action. FIXME: geeft problemen bijv een low res cirkel
+                    //if (isLoop && i==last) continue; //prevent double action. FIXME: geeft problemen bijv een low res cirkel
                     
                     if (even || isLoop) {
                         to = commands[i].to; //deze
-                        from = commands[i>0?i-1:0].to; //vorige
+                        //from = commands[i>0?i-1:0].to; //vorige
                     } else {
                         to = commands[last-i].to; //deze achterwaarts
-                        from = commands[i>0?last-i+1:last].to; //volgende
+                        //from = commands[i>0?last-i+1:last].to; //volgende
                     }
                     
-                    extruder += from.distance(to) * filamentThickness * wallThickness * layerHeight;
-                    
-                    float sublayer = layer==0 ? 0 : layer + (useSubLayers ? float(i)/commands.size() : 0);
-                    
+                    //if (!isLoop && i==0) cout << prev.distance(to) << endl;
+                                        
+                    float sublayer = layer==0 ? 0 : layer + (useSubLayers ? float(curLayerCommand)/totalLayerCommands : 0); //
                     float z = sublayer*layerHeight+zOffset;
-                    float speed = !isLoop && i==0 ? travelrate : feedrate;
+                    bool isTraveling = !isLoop && i==0 && prev.distance(to)>minimalDistanceForRetraction;
+                    float speed = isTraveling ? travelrate : feedrate;
                     
-                    gcode.addCommandWithParams("G1 X%03f Y%03f Z%03f F%03f E%03f", to.x, to.y, z, speed, extruder);
-                }
-            }
-        }
+                    if (isTraveling) {
+                         gcode.addCommandWithParams("G1 E%03f F%03f", extruder-retraction, retractionSpeed);   
+                         gcode.addCommandWithParams("G1 X%03f Y%03f Z%03f F%03f", to.x, to.y, z, speed);
+                         gcode.addCommandWithParams("G1 E%03f F%03f", extruder, retractionSpeed);
+                    }
+                    else {
+                        extruder += prev.distance(to) * filamentThickness * wallThickness * layerHeight;   
+                        gcode.addCommandWithParams("G1 X%03f Y%03f Z%03f F%03f E%03f", to.x, to.y, z, speed, extruder);
+                    }                    
+                    
+                    curLayerCommand++;
+                    prev = to;
+                } //for commands
+            } //for subpaths
+            
+            if (float(layer)/layers > objectHeight/maxObjectHeight) break;
+            
+        } //for layers
         
         gcode.insert("gcode/end.gcode");
         gcode.save("gcode/output.gcode");

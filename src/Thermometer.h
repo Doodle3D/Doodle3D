@@ -31,8 +31,8 @@ public:
         ofRect(1,mask.height-level,mask.width-1,level);
         ofSetColor(255);
         mask.draw(0,0);
-        if (ultimaker.temperature < targetTemperature) bad.draw(90,0);
-        else good.draw(90,0);
+//        if (ultimaker.temperature < targetTemperature) bad.draw(90,0);
+//        else good.draw(90,0);
         if (showWarmUp && ultimaker.temperature < targetTemperature) warmup.draw(-180,-60);
         ofPopMatrix();
         ofPopStyle();

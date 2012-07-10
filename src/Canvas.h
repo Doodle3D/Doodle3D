@@ -12,7 +12,7 @@ public:
     void setup() {
         isDrawing = false;
         bounds.set(220,180,640,440);
-        circleDetail = 16;
+        circleDetail = ini.get("circleDetail",16);
         path.setFilled(false);
         path.setCurveResolution(100);
         path.setStrokeWidth(2);
@@ -44,7 +44,7 @@ public:
         
         if (subpaths.size()>1) {
             ofSetColor(200);
-            for (int i=0; i<subpaths.size()-1; i+=2) {
+            for (int i=0; i<subpaths.size()-1; i++) {
                 vector<ofSubPath::Command> &left = subpaths[i].getCommands();
                 vector<ofSubPath::Command> &right = subpaths[i+1].getCommands();
                 ofLine(left.back().to,right.front().to);

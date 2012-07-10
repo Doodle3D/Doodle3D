@@ -72,7 +72,7 @@ public:
         if (points.size()<2) return;
         bool isLoop = points.front()->distance(*points.back())<25;
         cout << filename << ", loop=" << isLoop << endl;
-        ofxSimplifyPath(path);
+//        ofxSimplifyPath(path);
     }
 
     void deleteCurrentFile() {
