@@ -6,8 +6,10 @@ class Btn {
 public:
     
     int hitColor;
+    bool selected;
     
     void setup(int hitColor) {
+        selected = false;
         this->hitColor = hitColor;
     }
     

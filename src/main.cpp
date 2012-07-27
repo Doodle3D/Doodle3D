@@ -35,6 +35,8 @@ ofxBeginApp();
 //application properties
 ofImage bg,bg_busy,vb;
 Btn btnNew,btnSave,btnOops,btnLoadPrevious,btnLoadNext,btnPrint,btnStop;
+Btn btnTwistLeft, btnTwistRight, btnZoomIn, btnZoomOut, btnHigher, btnLower;
+
 Files files;
 Canvas canvas;
 Side side;
@@ -44,13 +46,20 @@ Printer printer;
 void setup() {
     loadSettings();
     
-    btnNew.setup(0xfccf58);
-    btnSave.setup(0x19f672);
-    btnOops.setup(0xa6b2d0);
-    btnLoadPrevious.setup(8537941);
-    btnLoadNext.setup(8242102);
+    btnNew.setup(0xffff00);
+    btnSave.setup(0x00ff00);
+    btnOops.setup(0x006464);
+    btnLoadPrevious.setup(0x804652);
+    btnLoadNext.setup(0x7fb9ad);
     btnPrint.setup(4044666);
-    btnStop.setup(15075981);
+    btnStop.setup(0xe6098d);
+    btnZoomIn.setup(0x500000);
+    btnZoomOut.setup(0x640000);
+    btnHigher.setup(0x780000);
+    btnLower.setup(0x8c0000);
+    btnTwistLeft.setup(0xa00000);
+    btnTwistRight.setup(0xb40000);
+    
     thermometer.setup();
     canvas.setup();
     files.setup();
@@ -74,6 +83,15 @@ void update() {
     if (ini.get("autoWarmUp",true) && ofGetFrameNum()==100) {
         ultimaker.send("M109 S" + ofToString(targetTemperature));
     }
+    
+    if (btnZoomIn.selected) canvas.zoom(1);
+    if (btnZoomOut.selected) canvas.zoom(-1);
+
+    if (btnHigher.selected) objectHeight = ofClamp(objectHeight+2, 3, maxObjectHeight);
+    if (btnLower.selected) objectHeight = ofClamp(objectHeight-2, 3, maxObjectHeight);
+
+    if (btnTwistLeft.selected) twists-=.01;
+    if (btnTwistRight.selected) twists+=.01;
 }
 
 void draw() {
@@ -126,12 +144,20 @@ void stop() {
 void mousePressed(int x, int y, int button) {
     canvas.mousePressed(x, y, button);
     side.mousePressed(x, y, button);
-    if (btnNew.hitTest(x,y)) canvas.clear();
+    if (btnNew.hitTest(x,y)) { files.cur=-1; canvas.clear(); }
     if (btnSave.hitTest(x,y)) files.save();
     if (btnLoadPrevious.hitTest(x,y)) files.loadPrevious();
     if (btnLoadNext.hitTest(x,y)) files.loadNext();
     if (btnPrint.hitTest(x,y)) printer.print();
     if (btnStop.hitTest(x,y)) stop();
+    if (btnOops.hitTest(x,y)) canvas.undo();
+    if (btnZoomIn.hitTest(x,y)) btnZoomIn.selected=true;
+    if (btnZoomOut.hitTest(x,y)) btnZoomOut.selected=true;
+    if (btnHigher.hitTest(x,y)) btnHigher.selected=true;
+    if (btnLower.hitTest(x,y)) btnLower.selected=true;
+    if (btnTwistLeft.hitTest(x,y)) btnTwistLeft.selected=true;
+    if (btnTwistRight.hitTest(x,y)) btnTwistRight.selected=true;
+    //cout << ofToHex(mask.getColor(x,y).getHex()) << endl;
 }
 
 void mouseDragged(int x, int y, int button) {
@@ -143,6 +169,13 @@ void mouseReleased(int x, int y, int button) {
     ofxSimplifyPath(path);
     side.mouseReleased(x, y, button);
     canvas.mouseReleased(x, y, button);
+    
+    if (btnZoomIn.hitTest(x,y)) btnZoomIn.selected=false;
+    if (btnZoomOut.hitTest(x,y)) btnZoomOut.selected=false;
+    if (btnHigher.hitTest(x,y)) btnHigher.selected=false;
+    if (btnLower.hitTest(x,y)) btnLower.selected=false;
+    if (btnTwistLeft.hitTest(x,y)) btnTwistLeft.selected=false;
+    if (btnTwistRight.hitTest(x,y)) btnTwistRight.selected=false;
 }
 
 void keyPressed(int key) {

@@ -55,17 +55,38 @@ public:
         ofPopStyle();
     }
     
+    void zoom(int dir) {
+        ofPoint center = ofxGetCenterOfMass(ofxGetPointsFromPath(path));
+        path.translate(-center); 
+        if (dir>0) path.scale(1/.97,1/.97); 
+        else path.scale(.97,.97);
+        path.translate(center);
+    }
+    
+    void rotate(float angle) {
+        ofPoint center = ofxGetCenterOfMass(ofxGetPointsFromPath(path));
+        path.translate(-center);
+        path.rotate(angle,ofVec3f(0,0,1)); 
+        path.translate(center); 
+    }
+    
+    void move(float x, float y) {
+        ofPoint center = ofxGetCenterOfMass(ofxGetPointsFromPath(path));
+        path.translate(-center);
+        path.translate(ofPoint(x,y));
+        path.translate(center); 
+    }
+    
     void update() {
         float translateStep=3;
-        ofPoint center = ofxGetCenterOfMass(ofxGetPointsFromPath(path));
-        if (ofGetKeyPressed('-')) { path.translate(-center); path.scale(.97,.97); path.translate(center); }
-        if (ofGetKeyPressed('=')) { path.translate(-center); path.scale(1/.97,1/.97); path.translate(center); }
-        if (ofGetKeyPressed('[')) { path.translate(-center); path.rotate(-1,ofVec3f(0,0,1)); path.translate(center); }
-        if (ofGetKeyPressed(']')) { path.translate(-center); path.rotate(1,ofVec3f(0,0,1)); path.translate(center); }
-        if (ofGetKeyPressed(OF_KEY_LEFT)) path.translate(ofPoint(-translateStep,0));
-        if (ofGetKeyPressed(OF_KEY_RIGHT)) path.translate(ofPoint(translateStep,0));
-        if (ofGetKeyPressed(OF_KEY_UP)) path.translate(ofPoint(0,-translateStep));
-        if (ofGetKeyPressed(OF_KEY_DOWN)) path.translate(ofPoint(0,translateStep));
+        if (ofGetKeyPressed('-')) zoom(-1);
+        if (ofGetKeyPressed('=')) zoom(1);
+        if (ofGetKeyPressed('[')) rotate(-1);
+        if (ofGetKeyPressed(']')) rotate(1);
+        if (ofGetKeyPressed(OF_KEY_LEFT)) move(-translateStep,0);
+        if (ofGetKeyPressed(OF_KEY_RIGHT)) move(translateStep,0);
+        if (ofGetKeyPressed(OF_KEY_UP)) move(0,-translateStep);
+        if (ofGetKeyPressed(OF_KEY_DOWN)) move(0,translateStep);
     }
     
     void drawDebug() {
