@@ -26,6 +26,8 @@ float scaleFunction(float f) {
 #include "Btn.h"
 #include "Canvas.h"
 #include "Files.h"
+Files files;
+
 #include "Side.h"
 #include "Thermometer.h"
 #include "Printer.h"
@@ -37,7 +39,6 @@ ofImage bg,bg_busy,vb;
 Btn btnNew,btnSave,btnOops,btnLoadPrevious,btnLoadNext,btnPrint,btnStop;
 Btn btnTwistLeft, btnTwistRight, btnZoomIn, btnZoomOut, btnHigher, btnLower;
 
-Files files;
 Canvas canvas;
 Side side;
 Thermometer thermometer;
@@ -73,6 +74,7 @@ void setup() {
     ofSetFullscreen(ini.get("fullscreen",true));
     ofSetFrameRate(ini.get("frameRate", 30));
     ofSetEscapeQuitsApp(ini.get("quitOnEscape",true));
+    ofEnableSmoothing();
     
     ultimaker.autoConnect();
 }
@@ -102,6 +104,9 @@ void draw() {
     if (debug) canvas.drawDebug();
     side.draw();
     thermometer.draw();
+    
+    ofSetColor(255,0,0);
+    ofDrawBitmapString(files.getFilename(), 20,20);
 }
 
 void loadSettings() {
@@ -131,6 +136,9 @@ void loadSettings() {
     printer.minimalDistanceForRetraction = ini.get("minimalDistanceForRetraction",5);
     printer.retraction = ini.get("retraction",2);
     printer.retractionSpeed = ini.get("retractionSpeed",100)*60;
+    printer.loopAlways = ini.get("loopAlways",false);
+    thermometer.showWarmUp = ini.get("showWarmUp",false);
+
 }
 
 void stop() {
@@ -144,7 +152,7 @@ void stop() {
 void mousePressed(int x, int y, int button) {
     canvas.mousePressed(x, y, button);
     side.mousePressed(x, y, button);
-    if (btnNew.hitTest(x,y)) { files.cur=-1; canvas.clear(); }
+    if (btnNew.hitTest(x,y)) { files.cur=-1; canvas.clear(); files.unloadFile(); }
     if (btnSave.hitTest(x,y)) files.save();
     if (btnLoadPrevious.hitTest(x,y)) files.loadPrevious();
     if (btnLoadNext.hitTest(x,y)) files.loadNext();
@@ -178,26 +186,34 @@ void mouseReleased(int x, int y, int button) {
     if (btnTwistRight.hitTest(x,y)) btnTwistRight.selected=false;
 }
 
+void chmod() {
+    string folder = ini.get("copyGCodeToPath","");
+    if (folder=="") return;
+    string cmd = "chmod -R 777 " + folder;
+    system(cmd.c_str());
+}
+
 void keyPressed(int key) {
     switch (key) {
         case '*': loadSettings(); break;
-        case '/': case '\\': case '$': case '#': case '|': case '%': case '@': case '^': side.setShape(key); break;
+        case '/': case '\\': case '$': case '#': case '|': case '%': case '@': case '^': case '&': side.setShape(key); break;
         case '3': side.is3D=!side.is3D; break;
-        case '<': twists-=.01; break;
-        case '>': twists+=.01; break;
+        case '<': twists-=.5; break;
+        case '>': twists+=.5; break;
+        case '?': twists=0; break;
         case 'a': side.toggle(); break;
         case 'b': useSubpathColors=!useSubpathColors; break;
         case 'C': canvas.createCircle(); break;
-        case 'c': case 'n': canvas.clear(); break;
+        case 'c': case 'n': canvas.clear(); files.unloadFile(); break;
         case 'd': debug=!debug; break;
-        case 'e': ultimaker.extrude(260,1000); break;
+        case 'e': printer.print(true); chmod(); break; //ultimaker.extrude(260,1000); break;
         case 'f': ofToggleFullscreen(); break;
-        case 'h': objectHeight++; if (objectHeight>maxObjectHeight) objectHeight=maxObjectHeight; break;
-        case 'H': objectHeight--; if (objectHeight<3) objectHeight=3; break;
+        case 'h': objectHeight+=5; if (objectHeight>maxObjectHeight) objectHeight=maxObjectHeight; break;
+        case 'H': objectHeight-=5; if (objectHeight<3) objectHeight=3; break;
         case 'l': files.loadNext(); break;
         case 'L': files.loadPrevious(); break;
         case 'o': files.load(); break;
-        case 'p': case 'm': case OF_KEY_RETURN: printer.print(); break;
+        case 'p': case 'm': case OF_KEY_RETURN: side.is3D=false; printer.print(); break;
         case 'q': stop(); break;
         case 'r': ultimaker.setRelative(); break;
         case 'S': files.save(); break;
@@ -205,16 +221,17 @@ void keyPressed(int key) {
         case 't': ultimaker.readTemperature(); break;
         case 'u': case 'z': canvas.undo(); break;
         case '~': files.deleteCurrentFile(); break;
+        case ' ': files.listDir(); break;
     }
 }
 
 ofxEndApp();
 
-int main() {   
+/*int main() {   
     ofAppGlutWindow window;
     window.setGlutDisplayString("rgba double samples>=4");
     ofSetupOpenGL(&window, 1280, 800, OF_WINDOW);
     ofRunApp(new ofApp);
 }
-
+*/
   

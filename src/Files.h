@@ -7,6 +7,7 @@ public:
     
     int cur;
     ofDirectory dir;
+    ofDirectory monitor;
     
     Files() {
         cur=-1;
@@ -25,11 +26,20 @@ public:
                 }
             }
         }
+        
+        string monitorFolder = ini.get("monitorFolder","");
+        if (monitorFolder!="") {
+            monitor.reset();
+            monitor.listDir(monitorFolder);
+            cout << "monitor numFiles: " << monitor.numFiles() << endl;
+        }
+
     }
         
     void listDir() {
         dir.reset();
-        dir.listDir("doodles/");
+        string monitorFolder = ini.get("monitorFolder","");
+        dir.listDir(monitorFolder); //"doodles/");
     }
     
     void loadPrevious() {
@@ -46,7 +56,10 @@ public:
         
     void load() {
         ofFileDialogResult result = ofSystemLoadDialog();
-        if (result.bSuccess) return load(result.getPath());
+        if (result.bSuccess) {
+            unloadFile();
+            return load(result.getPath());
+        }
     }
     
     void load(string filename) {
@@ -62,6 +75,7 @@ public:
                 float x = ofToFloat(tuple[0]);
                 float y = ofToFloat(tuple[1]);
                 ofPoint p = ofPoint(x,y); // + ofPoint(bounds.x, bounds.y);
+                p += ini.get("loadOffset",ofPoint());
                 if (j==0) path.moveTo(p.x,p.y);
                 else path.lineTo(p.x,p.y);
             }
@@ -112,5 +126,17 @@ public:
         ofxSaveStrings("doodles/" + filename,lines); //will only save file in data/doodles/ folder
         listDir();
         cout << "saved: " << filename << endl;
+    }
+    
+    void unloadFile() {
+        cur=-1;
+    }
+    
+    string getFilename() {
+        if (cur<0 || cur>=dir.numFiles()) return "noname";
+        else {
+//            cout << cur << endl;
+            return dir.getName(cur);   
+        }
     }
 };
