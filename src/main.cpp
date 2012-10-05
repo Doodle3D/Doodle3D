@@ -98,7 +98,7 @@ void update() {
 
 void draw() {
     ofSetupScreenOrtho(0,0,OF_ORIENTATION_UNKNOWN,true,-200,200);
-    ofSetColor(255);
+    ofSetColor(255);    ofScale(float(ofGetWidth()) / 1280.0, float(ofGetHeight()) / 800.0);
     if (ultimaker.isBusy || (ini.get("autoWarmUp",true) && ofGetFrameNum()<100)) bg_busy.draw(0,0); else bg.draw(0,0);
     canvas.draw();
     if (debug) canvas.drawDebug();
@@ -149,7 +149,7 @@ void stop() {
     //M84
 }
 
-void mousePressed(int x, int y, int button) {
+void mousePressed(int x, int y, int button) {    x = x * 1280 / ofGetWidth();    y = y * 800 / ofGetHeight();
     canvas.mousePressed(x, y, button);
     side.mousePressed(x, y, button);
     if (btnNew.hitTest(x,y)) { files.cur=-1; canvas.clear(); files.unloadFile(); }
@@ -169,12 +169,12 @@ void mousePressed(int x, int y, int button) {
 }
 
 void mouseDragged(int x, int y, int button) {
-    canvas.mouseDragged(x, y, button);
+    x = x * 1280 / ofGetWidth();    y = y * 800 / ofGetHeight();    canvas.mouseDragged(x, y, button);
     side.mouseDragged(x, y, button);
 }
 
 void mouseReleased(int x, int y, int button) {
-    ofxSimplifyPath(path);
+    x = x * 1280 / ofGetWidth();    y = y * 800 / ofGetHeight();    ofxSimplifyPath(path);
     side.mouseReleased(x, y, button);
     canvas.mouseReleased(x, y, button);
     
@@ -234,4 +234,4 @@ ofxEndApp();
     ofRunApp(new ofApp);
 }
 */
-  
+  
