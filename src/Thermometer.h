@@ -23,7 +23,8 @@ public:
     }
 
     void draw() {
-        float level = ofMap(ultimaker.temperature, 0, targetTemperature, 40, mask.height-40, true);
+        int temperature = ultimaker.temperature;
+        float level = ofMap(temperature, 0, targetTemperature, 40, mask.height-40, true);
         ofPushStyle();
         ofPushMatrix();
         ofTranslate(position);
@@ -31,9 +32,9 @@ public:
         ofRect(1,mask.height-level,mask.width-1,level);
         ofSetColor(255);
         mask.draw(0,0);
-//        if (ultimaker.temperature < targetTemperature) bad.draw(90,0);
-//        else good.draw(90,0);
-        if (showWarmUp && ultimaker.temperature < targetTemperature) warmup.draw(-180,-60);
+        if (temperature < targetTemperature && ultimaker.isBusy && !ultimaker.isPrinting) bad.draw(90,0);
+        else good.draw(90,0);
+        if (showWarmUp && ultimaker.isBusy && !ultimaker.isPrinting && temperature < targetTemperature) warmup.draw(-180,-60);
         ofPopMatrix();
         ofPopStyle();
     }
