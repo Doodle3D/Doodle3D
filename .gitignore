@@ -6,3 +6,4 @@ bin/*.app/
 .vcproj.user
 .layout
 release/
+*.zip
