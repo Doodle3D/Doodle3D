@@ -54,8 +54,12 @@ public:
                     for (int i=0; i<subpaths.size(); i++) {
                         vector<ofSubPath::Command> &commands = subpaths[i].getCommands();
                         ofNoFill();
-                        ofSetLineWidth(2);
-                        ofSetColor(ofColor::fromHsb(float(i)/subpaths.size()*255, 255, 255, 60));
+                        ofSetLineWidth(1);
+                        if (useSubpathColors) {
+                            ofSetColor(ofColor::fromHsb(float(i)/subpaths.size()*255, 255, 255, 60));
+                        } else {
+                            ofSetColor(255,0,0,60);
+                        }
                         ofBeginShape();
                         for (int j=0; j<commands.size(); j++) {
                             ofVertex(commands[j].to.x, commands[j].to.y);
@@ -125,6 +129,7 @@ public:
             if (c=='$') vfunc[i]=ofMap(-sin(1*ii*TWO_PI),-1,1,minScale,maxScale);
             if (c=='#') vfunc[i]=ofMap(-sin(2*ii*TWO_PI),-1,1,minScale,maxScale);
             if (c=='%') vfunc[i]=ofMap(-sin(4*ii*TWO_PI),-1,1,minScale,maxScale);
+            if (c=='&') vfunc[i]=ofMap(-sin(8*ii*TWO_PI),-1,1,minScale,maxScale);
             if (c=='@') vfunc[i]=ofMap(ii*ii,0,1,minScale,maxScale);
             if (c=='^') vfunc[i]=ofMap(asin(sin(3*ii*TWO_PI)),-PI/2,PI/2,minScale,maxScale);
         }

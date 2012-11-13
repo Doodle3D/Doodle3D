@@ -7,6 +7,7 @@ public:
     
     int cur;
     ofDirectory dir;
+    ofDirectory monitor;
     
     Files() {
         cur=-1;
@@ -25,11 +26,20 @@ public:
                 }
             }
         }
+        
+        string monitorFolder = ini.get("monitorFolder","");
+        if (monitorFolder!="") {
+            monitor.reset();
+            monitor.listDir(monitorFolder);
+            cout << "monitor numFiles: " << monitor.numFiles() << endl;
+        }
+
     }
         
     void listDir() {
         dir.reset();
-        dir.listDir("doodles/");
+        string monitorFolder = ini.get("monitorFolder","");
+        dir.listDir(monitorFolder); //"doodles/");
     }
     
     void loadPrevious() {
@@ -46,23 +56,30 @@ public:
         
     void load() {
         ofFileDialogResult result = ofSystemLoadDialog();
-        if (result.bSuccess) return load(result.getPath());
+        if (result.bSuccess) {
+            unloadFile();
+            return load(result.getPath());
+        }
     }
+//    
+//    void loadFromString(string str) {
+//        path.clear();
+//        loadFromStrings(ofSplitString(str, "\n")); //or \r
+//    }
     
-    void load(string filename) {
-        //if (!path) return;
-        if (!ofxFileExists(filename)) return; //file not existing or removed   
-        path.clear();
-        vector<string> lines = ofxLoadStrings(filename);
+    void loadFromStrings(vector<string> lines) {
         for (int i=0; i<lines.size(); i++) {
             vector<string> coords = ofSplitString(lines[i], " ");
             for (int j=0; j<coords.size(); j++) {
                 vector<string> tuple = ofSplitString(coords[j], ",");
-                if (tuple.size()!=2) return; //error in textfile
+                if (tuple.size()!=2) continue; //{ cout << "error in textfile" << endl; return; }
                 float x = ofToFloat(tuple[0]);
                 float y = ofToFloat(tuple[1]);
                 ofPoint p = ofPoint(x,y); // + ofPoint(bounds.x, bounds.y);
-                if (j==0) path.moveTo(p.x,p.y);
+                p += ini.get("loadOffset",ofPoint());                
+                if (j==0) {
+                    path.moveTo(p.x,p.y);
+                }
                 else path.lineTo(p.x,p.y);
             }
         }
@@ -71,8 +88,15 @@ public:
         vector<ofPoint*> points = ofxGetPointsFromPath(path);
         if (points.size()<2) return;
         bool isLoop = points.front()->distance(*points.back())<25;
-        cout << filename << ", loop=" << isLoop << endl;
-//        ofxSimplifyPath(path);
+        //cout << filename << ", loop=" << isLoop << endl;
+        //        ofxSimplifyPath(path);
+    }
+    
+    void load(string filename) {
+        //if (!path) return;
+        if (!ofxFileExists(filename)) return; //file not existing or removed   
+        path.clear();
+        loadFromStrings(ofxLoadStrings(filename));
     }
 
     void deleteCurrentFile() {
@@ -112,5 +136,17 @@ public:
         ofxSaveStrings("doodles/" + filename,lines); //will only save file in data/doodles/ folder
         listDir();
         cout << "saved: " << filename << endl;
+    }
+    
+    void unloadFile() {
+        cur=-1;
+    }
+    
+    string getFilename() {
+        if (cur<0 || cur>=dir.numFiles()) return "noname";
+        else {
+//            cout << cur << endl;
+            return dir.getName(cur);   
+        }
     }
 };

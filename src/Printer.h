@@ -14,12 +14,13 @@ public:
     float minimalDistanceForRetraction;
     float retraction;
     float retractionSpeed;
+    bool loopAlways;
     
     void setup() {
         //settings loaded in loadSettings
     }
     
-    void print() {
+    void print(bool exportOnly=false) {
         cout << "print" << endl;
                 
         gcode.lines.clear();
@@ -45,7 +46,7 @@ public:
             float progress=float(layer)/layers;
             float layerScale = scaleFunction(float(layer)/layers);
             bool isLoop = points.front()->distance(*points.back())<3;
-            
+                        
             p.translate(-ofxGetCenterOfMass(points));
             p.scale(screenToMillimeterScale,-screenToMillimeterScale);
             p.scale(layerScale,layerScale);
@@ -83,7 +84,7 @@ public:
                                         
                     //if (isLoop && i==last) continue; //prevent double action. FIXME: geeft problemen bijv een low res cirkel
                     
-                    if (even || isLoop) {
+                    if (even || isLoop || loopAlways) {
                         to = commands[i].to; //deze
                         //from = commands[i>0?i-1:0].to; //vorige
                     } else {
@@ -118,13 +119,43 @@ public:
         } //for layers
         
         gcode.insert("gcode/end.gcode");
-        gcode.save("gcode/output.gcode");
         
+        string hourMinutes = ofxFormatDateTime(ofxGetDateTime(),"%H.%M");
+        
+        cout << hourMinutes << endl;
+        
+        string filename = "gcode/"+files.getFilename()+"_"+hourMinutes+".gcode";
+
+        gcode.save(filename);
+        
+        cout << "exported " << filename << endl;
+        
+        if (exportOnly) {
+            ofFile f(filename);
+            string copyGCodeToPath = ini.get("copyGCodeToPath","");
+            if (copyGCodeToPath!="") {
+                ofFile sd(copyGCodeToPath);
+                string shortName = f.getFileName().substr(0,8);
+                shortName = ofxStringBeforeFirst(shortName, "."); //remove ext
+                //cout << shortName << endl;
+                if (sd.exists()) {
+                    cout << "copy " << shortName+".gco" << " to " << copyGCodeToPath << endl;
+                    f.copyTo(copyGCodeToPath+"/"+shortName+".gco");
+                }
+            }
+        }
+        
+        if (ini.get("printingDisabled",false)==true) return;
+        
+        if (exportOnly) return;
+
         //send generated gcode to printer
         cout << "ultimaker.isBusy: " << ultimaker.isBusy << endl;
         cout << "frame: " << ofGetFrameNum() << endl;
         if (ofGetFrameNum()<210 || ultimaker.isBusy) return;
-        ultimaker.load("gcode/output.gcode");
+        ultimaker.load(filename);
         ultimaker.startPrint();
     }
+    
+    
 };

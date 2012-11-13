@@ -11,6 +11,8 @@
 		1D83E087158A505D005F0922 /* ofxGCode.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 1D83E07F158A505D005F0922 /* ofxGCode.cpp */; };
 		1D83E088158A505D005F0922 /* ofxExtras.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 1D83E083158A505D005F0922 /* ofxExtras.cpp */; };
 		1D83E08B158A530E005F0922 /* ofxUltimaker.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 1D83E08A158A530E005F0922 /* ofxUltimaker.cpp */; };
+		1DC9E35116425B5100A90E2A /* ofxHTTPServer.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 1DC9E34816425B5100A90E2A /* ofxHTTPServer.cpp */; };
+		1DC9E3571642658A00A90E2A /* libmicrohttpd.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 1DC9E3561642658A00A90E2A /* libmicrohttpd.a */; };
 		BBAB23CB13894F3D00AA2426 /* GLUT.framework in CopyFiles */ = {isa = PBXBuildFile; fileRef = BBAB23BE13894E4700AA2426 /* GLUT.framework */; };
 		E4328149138ABC9F0047C5CB /* openFrameworksDebug.a in Frameworks */ = {isa = PBXBuildFile; fileRef = E4328148138ABC890047C5CB /* openFrameworksDebug.a */; };
 		E45BE97B0E8CC7DD009D7055 /* AGL.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = E45BE9710E8CC7DD009D7055 /* AGL.framework */; };
@@ -78,6 +80,16 @@
 		1D83E085158A505D005F0922 /* README */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = README; sourceTree = "<group>"; };
 		1D83E089158A5307005F0922 /* ofxUltimaker.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ofxUltimaker.h; sourceTree = "<group>"; };
 		1D83E08A158A530E005F0922 /* ofxUltimaker.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ofxUltimaker.cpp; sourceTree = "<group>"; };
+		1DC9E32E16425B5100A90E2A /* .cproject */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xml; path = .cproject; sourceTree = "<group>"; };
+		1DC9E32F16425B5100A90E2A /* .gitignore */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = .gitignore; sourceTree = "<group>"; };
+		1DC9E33016425B5100A90E2A /* .project */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xml; path = .project; sourceTree = "<group>"; };
+		1DC9E33616425B5100A90E2A /* install.xml */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xml; path = install.xml; sourceTree = "<group>"; };
+		1DC9E33A16425B5100A90E2A /* microhttpd.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = microhttpd.h; sourceTree = "<group>"; };
+		1DC9E33B16425B5100A90E2A /* platform.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = platform.h; sourceTree = "<group>"; };
+		1DC9E33C16425B5100A90E2A /* plibc.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = plibc.h; sourceTree = "<group>"; };
+		1DC9E34816425B5100A90E2A /* ofxHTTPServer.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ofxHTTPServer.cpp; sourceTree = "<group>"; };
+		1DC9E34916425B5100A90E2A /* ofxHTTPServer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ofxHTTPServer.h; sourceTree = "<group>"; };
+		1DC9E3561642658A00A90E2A /* libmicrohttpd.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libmicrohttpd.a; path = addons/ofxHttpServer/libs/microhttpd/lib/macosx/libmicrohttpd.a; sourceTree = "<group>"; };
 		BBAB23BE13894E4700AA2426 /* GLUT.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = GLUT.framework; path = ../../../libs/glut/lib/osx/GLUT.framework; sourceTree = "<group>"; };
 		E4328143138ABC890047C5CB /* openFrameworksLib.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = openFrameworksLib.xcodeproj; path = ../../../libs/openFrameworksCompiled/project/osx/openFrameworksLib.xcodeproj; sourceTree = SOURCE_ROOT; };
 		E45BE9710E8CC7DD009D7055 /* AGL.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AGL.framework; path = /System/Library/Frameworks/AGL.framework; sourceTree = "<absolute>"; };
@@ -118,6 +130,7 @@
 				E4C2424710CC5A17004149E2 /* AppKit.framework in Frameworks */,
 				E4C2424810CC5A17004149E2 /* Cocoa.framework in Frameworks */,
 				E4C2424910CC5A17004149E2 /* IOKit.framework in Frameworks */,
+				1DC9E3571642658A00A90E2A /* libmicrohttpd.a in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -168,9 +181,75 @@
 			path = addons/ofxExtras;
 			sourceTree = "<group>";
 		};
+		1DC9E32D16425B5100A90E2A /* ofxHttpServer */ = {
+			isa = PBXGroup;
+			children = (
+				1DC9E32E16425B5100A90E2A /* .cproject */,
+				1DC9E32F16425B5100A90E2A /* .gitignore */,
+				1DC9E33016425B5100A90E2A /* .project */,
+				1DC9E33616425B5100A90E2A /* install.xml */,
+				1DC9E33716425B5100A90E2A /* libs */,
+				1DC9E34716425B5100A90E2A /* src */,
+			);
+			name = ofxHttpServer;
+			path = addons/ofxHttpServer;
+			sourceTree = "<group>";
+		};
+		1DC9E33716425B5100A90E2A /* libs */ = {
+			isa = PBXGroup;
+			children = (
+				1DC9E33816425B5100A90E2A /* microhttpd */,
+			);
+			path = libs;
+			sourceTree = "<group>";
+		};
+		1DC9E33816425B5100A90E2A /* microhttpd */ = {
+			isa = PBXGroup;
+			children = (
+				1DC9E33916425B5100A90E2A /* include */,
+				1DC9E33D16425B5100A90E2A /* lib */,
+			);
+			path = microhttpd;
+			sourceTree = "<group>";
+		};
+		1DC9E33916425B5100A90E2A /* include */ = {
+			isa = PBXGroup;
+			children = (
+				1DC9E33A16425B5100A90E2A /* microhttpd.h */,
+				1DC9E33B16425B5100A90E2A /* platform.h */,
+				1DC9E33C16425B5100A90E2A /* plibc.h */,
+			);
+			path = include;
+			sourceTree = "<group>";
+		};
+		1DC9E33D16425B5100A90E2A /* lib */ = {
+			isa = PBXGroup;
+			children = (
+				1DC9E34216425B5100A90E2A /* macosx */,
+			);
+			path = lib;
+			sourceTree = "<group>";
+		};
+		1DC9E34216425B5100A90E2A /* macosx */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			path = macosx;
+			sourceTree = "<group>";
+		};
+		1DC9E34716425B5100A90E2A /* src */ = {
+			isa = PBXGroup;
+			children = (
+				1DC9E34816425B5100A90E2A /* ofxHTTPServer.cpp */,
+				1DC9E34916425B5100A90E2A /* ofxHTTPServer.h */,
+			);
+			path = src;
+			sourceTree = "<group>";
+		};
 		BB4B014C10F69532006C3DED /* addons */ = {
 			isa = PBXGroup;
 			children = (
+				1DC9E32D16425B5100A90E2A /* ofxHttpServer */,
 				1D83E078158A505D005F0922 /* ofxUltimaker */,
 				1D83E079158A505D005F0922 /* ofxIniSettings */,
 				1D83E07E158A505D005F0922 /* ofxGCode */,
@@ -226,6 +305,7 @@
 		E4B69B4A0A3A1720003C02F2 = {
 			isa = PBXGroup;
 			children = (
+				1DC9E3561642658A00A90E2A /* libmicrohttpd.a */,
 				E4B6FCAD0C3E899E008CF71C /* openFrameworks-Info.plist */,
 				E4EB6923138AFD0F00A09F29 /* Project.xcconfig */,
 				E4B69E1C0A3A1BDC003C02F2 /* src */,
@@ -351,6 +431,7 @@
 				1D83E087158A505D005F0922 /* ofxGCode.cpp in Sources */,
 				1D83E088158A505D005F0922 /* ofxExtras.cpp in Sources */,
 				1D83E08B158A530E005F0922 /* ofxUltimaker.cpp in Sources */,
+				1DC9E35116425B5100A90E2A /* ofxHTTPServer.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -385,10 +466,17 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = NO;
 				GCC_WARN_UNUSED_VALUE = NO;
 				GCC_WARN_UNUSED_VARIABLE = NO;
+				MACOSX_DEPLOYMENT_TARGET = 10.5;
+				ONLY_ACTIVE_ARCH = YES;
 				OTHER_CPLUSPLUSFLAGS = (
 					"-D__MACOSX_CORE__",
 					"-lpthread",
 				);
+				OTHER_LDFLAGS = (
+					"$(OF_CORE_LIBS)",
+					"\"$(SRCROOT)/addons/ofxHttpServer/libs/microhttpd/lib/macosx/libmicrohttpd.a\"",
+				);
+				SDKROOT = macosx10.6;
 			};
 			name = Debug;
 		};
@@ -414,10 +502,17 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = NO;
 				GCC_WARN_UNUSED_VALUE = NO;
 				GCC_WARN_UNUSED_VARIABLE = NO;
+				MACOSX_DEPLOYMENT_TARGET = 10.5;
+				ONLY_ACTIVE_ARCH = YES;
 				OTHER_CPLUSPLUSFLAGS = (
 					"-D__MACOSX_CORE__",
 					"-lpthread",
 				);
+				OTHER_LDFLAGS = (
+					"$(OF_CORE_LIBS)",
+					"\"$(SRCROOT)/addons/ofxHttpServer/libs/microhttpd/lib/macosx/libmicrohttpd.a\"",
+				);
+				SDKROOT = macosx10.6;
 			};
 			name = Release;
 		};
@@ -500,7 +595,13 @@
 					"$(LIBRARY_SEARCH_PATHS_QUOTED_FOR_TARGET_50)",
 					"$(LIBRARY_SEARCH_PATHS_QUOTED_FOR_TARGET_51)",
 					"$(LIBRARY_SEARCH_PATHS_QUOTED_FOR_TARGET_52)",
+					"\"$(SRCROOT)/addons/ofxHttpServer/libs/microhttpd/lib/linux\"",
+					"\"$(SRCROOT)/addons/ofxHttpServer/libs/microhttpd/lib/linux64\"",
+					"\"$(SRCROOT)/addons/ofxHttpServer/libs/microhttpd/lib/macosx\"",
+					"\"$(SRCROOT)/addons/ofxHttpServer/libs/microhttpd/lib/win32\"",
+					"\"$(SRCROOT)/../../../../../../Downloads/tmp\"",
 				);
+				ONLY_ACTIVE_ARCH = YES;
 				PRODUCT_NAME = Doodle3DDebug;
 				WRAPPER_EXTENSION = app;
 			};
@@ -584,7 +685,13 @@
 					"$(LIBRARY_SEARCH_PATHS_QUOTED_FOR_TARGET_49)",
 					"$(LIBRARY_SEARCH_PATHS_QUOTED_FOR_TARGET_50)",
 					"$(LIBRARY_SEARCH_PATHS_QUOTED_FOR_TARGET_51)",
+					"\"$(SRCROOT)/addons/ofxHttpServer/libs/microhttpd/lib/linux\"",
+					"\"$(SRCROOT)/addons/ofxHttpServer/libs/microhttpd/lib/linux64\"",
+					"\"$(SRCROOT)/addons/ofxHttpServer/libs/microhttpd/lib/macosx\"",
+					"\"$(SRCROOT)/addons/ofxHttpServer/libs/microhttpd/lib/win32\"",
+					"\"$(SRCROOT)/../../../../../../Downloads/tmp\"",
 				);
+				ONLY_ACTIVE_ARCH = YES;
 				PRODUCT_NAME = Doodle3D;
 				WRAPPER_EXTENSION = app;
 			};
