@@ -10,3 +10,6 @@
 [submodule "addons/ofxUltimaker"]
 	path = addons/ofxUltimaker
 	url = https://github.com/companje/ofxUltimaker
+[submodule "addons/ofxHttpServer"]
+	path = addons/ofxHttpServer
+	url = git@github.com:companje/ofxHttpServer.git
