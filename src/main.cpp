@@ -23,6 +23,7 @@ string deviceName;
 int serverPort;
 bool autoDetectDeviceName=false;
 bool showStatusMessage=true;
+bool connectionFailed=false;
 
 float scaleFunction(float f) {
     //return minScale; //ofMap(f,0,1,minScale,maxScale);
@@ -55,6 +56,8 @@ public:
     ofSerial tmp;
 
     void setup() {
+        ofSetDataPathRoot("../Resources/");
+        
         loadSettings();
         
         btnNew.setup(0xffff00);
@@ -73,11 +76,11 @@ public:
         
         thermometer.setup();
         canvas.setup();
-        files.setup();
+
         printer.setup();
-        bg.loadImage("images/bg.png");
-        bg_busy.loadImage("images/bg_busy.png");
-        mask.loadImage("images/mask.png");
+        bg.loadImage("bg.png");
+        bg_busy.loadImage("bgbusy.png");
+        mask.loadImage("mask.png");
         
 //        ofSetLogLevel(OF_LOG_NOTICE);
         
@@ -100,8 +103,27 @@ public:
         server->setCallbackExtension("of");	 // extension of urls that aren't files but will generate a post or get event
         server->setListener(*this);
         server->start(ini.get("server.port",serverPort));
+        
+        ofBackground(255);
+        
+        //ofDirectory::createDirectory("~/Doodle3D");
+        //ofSetDataPathRoot("~/Doodle3D/");
+        //cout << ofToDataPath("mask.png") << endl;
+        //string filename = ofToDataPath("test123.txt");
+        //cout << filename << endl;
+        
+        //ofstream file(filename.c_str(),ios::out);
+        //file << "test" << endl;
+        //file.close();
+        
+        files.setup();  //verandert ook het DataPath naar ~/Documents/Doodle3D/
+        
+//        string filename = ofToDataPath("test");
+//        ofstream file(filename.c_str(),ios::out);
+//        file << "test" << endl;
+//        file.close();
     }
-
+    
     void getRequest(ofxHTTPServerResponse & response){
     }
     
@@ -143,7 +165,7 @@ public:
         if (btnTwistLeft.selected) twists-=.01;
         if (btnTwistRight.selected) twists+=.01;
         
-        if (btnOops.selected && ofGetFrameNum()%5==0) {
+        if (btnOops.selected) { // && ofGetFrameNum()%5==0) {
             canvas.undo();
         }
         
@@ -156,7 +178,11 @@ public:
     void draw() {
         ofSetupScreenOrtho(0,0,OF_ORIENTATION_UNKNOWN,true,-200,200);
         ofSetColor(255);
-        if (ultimaker.isBusy || !ultimaker.isStartTagFound || (ini.get("autoWarmUp",true) && ofGetFrameNum()<100)) bg_busy.draw(0,0); else bg.draw(0,0);
+        
+        if (connectionFailed) bg.draw(0,0);
+        else if (ultimaker.isBusy || !ultimaker.isStartTagFound || (ini.get("autoWarmUp",true) && ofGetFrameNum()<100)) bg_busy.draw(0,0);
+        else bg.draw(0,0);
+        
         canvas.draw();
         if (debug) canvas.drawDebug();
         side.draw();
@@ -171,6 +197,7 @@ public:
         } else if (ofGetFrameNum()>10*30 && ofGetFrameNum()<20*30 && !ultimaker.isStartTagFound) {
             ofSetColor(255,0,0);
             status = "Failed to connect. Make sure your Ultimaker runs Marlin firmware at speed 115200 bps";
+            connectionFailed = true;
         } else if (debug) {
             ofSetColor(0);
             status = ofToString(ofGetFrameRate());
@@ -283,7 +310,7 @@ public:
             case 'b': useSubpathColors=!useSubpathColors; break;
             case 'C': canvas.createCircle(); break;
             case 'c': case 'n': canvas.clear(); files.unloadFile(); break;
-            case 'd': debug=!debug; break;
+            case 'd': debug=!debug; showStatusMessage=debug; break;
             case 'e': printer.print(true); chmod(); break; //ultimaker.extrude(260,1000); break;
             case 'f': ofToggleFullscreen(); break;
             case 'h': objectHeight+=5; if (objectHeight>maxObjectHeight) objectHeight=maxObjectHeight; break;

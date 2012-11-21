@@ -7,13 +7,21 @@ public:
     
     int cur;
     ofDirectory dir;
-    ofDirectory monitor;
+    //ofDirectory monitor;
+    string doodlesFolder;
     
     Files() {
         cur=-1;
     }
     
     void setup() {
+        string folder = ofFilePath::getPathForDirectory("~/Documents/Doodle3D/");
+        ofDirectory::createDirectory(folder);
+        ofDirectory::createDirectory(folder + "doodles/");
+        ofSetDataPathRoot(folder);
+        
+        doodlesFolder = ofToDataPath(ini.get("doodlesFolder","doodles"));
+                
         listDir();
         
         //auto load image
@@ -27,19 +35,18 @@ public:
             }
         }
         
-        string monitorFolder = ini.get("monitorFolder","");
-        if (monitorFolder!="") {
-            monitor.reset();
-            monitor.listDir(monitorFolder);
-            cout << "monitor numFiles: " << monitor.numFiles() << endl;
-        }
+//        doodlesFolder = ini.get("doodlesFolder","doodles");
+//        if (doodlesFolder!="") {
+//            monitor.reset();
+//            monitor.listDir(doodlesFolder);
+//            cout << "monitor numFiles: " << monitor.numFiles() << endl;
+//        }
 
     }
         
     void listDir() {
         dir.reset();
-        string monitorFolder = ini.get("monitorFolder","");
-        dir.listDir(monitorFolder); //"doodles/");
+        dir.listDir(doodlesFolder);
     }
     
     void loadPrevious() {
@@ -76,7 +83,7 @@ public:
                 float x = ofToFloat(tuple[0]);
                 float y = ofToFloat(tuple[1]);
                 ofPoint p = ofPoint(x,y); // + ofPoint(bounds.x, bounds.y);
-                p += ini.get("loadOffset",ofPoint());                
+                p += ini.get("loadOffset",ofPoint());
                 if (j==0) {
                     path.moveTo(p.x,p.y);
                 }
@@ -100,6 +107,8 @@ public:
     }
 
     void deleteCurrentFile() {
+        cout << "delete: " << cur << endl;
+        if (cur<0 || cur>=dir.numFiles()-1) return;
         ofFile f(dir.getPath(cur));
         f.remove();
         listDir();
@@ -116,8 +125,12 @@ public:
     
     void saveAs() {
         //ofSetFullscreen(false);
-        ofFileDialogResult result = ofSystemSaveDialog("doodle.txt","Je tekening wordt altijd opgeslagen in de doodles map.");
-        if (result.bSuccess) save(result.getName());
+        listDir();
+        string filename = "doodle"+ofToString(dir.numFiles()+1)+".txt";
+        ofFileDialogResult result = ofSystemSaveDialog(filename,"Je tekening wordt altijd opgeslagen in de ~/Documents/Doodle3D/doodles/ map.");
+        if (result.bSuccess) {
+             save(result.getName());   
+        }
         //ofSetFullscreen(true);
     }
     
@@ -129,13 +142,15 @@ public:
             vector<ofSubPath::Command> &commands = subpaths[i].getCommands();
             for (int j=0; j<commands.size(); j++) {
                 ofPoint p = commands[j].to; // - ofPoint(bounds.x, bounds.y);
+                p -= ini.get("loadOffset",ofPoint());
                 line+=ofToString(p.x) + "," + ofToString(p.y) + " ";
             }
             lines.push_back(line);
         }
-        ofxSaveStrings("doodles/" + filename,lines); //will only save file in data/doodles/ folder
+        string filePath = doodlesFolder + "/" + filename;
+        ofxSaveStrings(filePath,lines); //will only save file in data/doodles/ folder
         listDir();
-        cout << "saved: " << filename << endl;
+        cout << "saved: " << filePath << endl;
     }
     
     void unloadFile() {

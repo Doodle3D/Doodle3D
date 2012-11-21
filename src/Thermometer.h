@@ -16,10 +16,10 @@ public:
     
     void setup() {
         position.set(1105,506);
-        mask.loadImage("images/thermo-mask.png");
-        good.loadImage("images/krul.png");
-        bad.loadImage("images/kruis.png");
-        warmup.loadImage("images/opwarmen.png");
+        mask.loadImage("thermomask.png");
+        good.loadImage("krul.png");
+        bad.loadImage("kruis.png");
+        //warmup.loadImage("images/opwarmen.png");
     }
 
     void draw() {
@@ -34,7 +34,7 @@ public:
         mask.draw(0,0);
         if (temperature < targetTemperature && ultimaker.isBusy && !ultimaker.isPrinting) bad.draw(90,0);
         else good.draw(90,0);
-        if (showWarmUp && ultimaker.isBusy && !ultimaker.isPrinting && temperature < targetTemperature) warmup.draw(-180,-60);
+        //if (showWarmUp && ultimaker.isBusy && !ultimaker.isPrinting && temperature < targetTemperature) warmup.draw(-180,-60);
         ofPopMatrix();
         ofPopStyle();
     }

@@ -7,6 +7,15 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		1D82A7AB1658F7E10070EBC8 /* bg.png in Resources */ = {isa = PBXBuildFile; fileRef = 1D82A79C1658F6960070EBC8 /* bg.png */; };
+		1D82A7AC1658F7E30070EBC8 /* bgbusy.png in Resources */ = {isa = PBXBuildFile; fileRef = 1D82A79D1658F6960070EBC8 /* bgbusy.png */; };
+		1D82A7AD1658F7E50070EBC8 /* Doodle3D.icns in Resources */ = {isa = PBXBuildFile; fileRef = 1D82A79E1658F6960070EBC8 /* Doodle3D.icns */; };
+		1D82A7AE1658F7E70070EBC8 /* kruis.png in Resources */ = {isa = PBXBuildFile; fileRef = 1D82A79F1658F6960070EBC8 /* kruis.png */; };
+		1D82A7AF1658F7EC0070EBC8 /* krul.png in Resources */ = {isa = PBXBuildFile; fileRef = 1D82A7A01658F6960070EBC8 /* krul.png */; };
+		1D82A7B01658F7EE0070EBC8 /* mask.png in Resources */ = {isa = PBXBuildFile; fileRef = 1D82A7A11658F6960070EBC8 /* mask.png */; };
+		1D82A7B11658F7F00070EBC8 /* thermomask.png in Resources */ = {isa = PBXBuildFile; fileRef = 1D82A7A21658F6960070EBC8 /* thermomask.png */; };
+		1D82A7B31658F8550070EBC8 /* openFrameworks.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 1D82A7B21658F8550070EBC8 /* openFrameworks.a */; };
+		1D82A7B51658F88D0070EBC8 /* Doodle3D.ini in Resources */ = {isa = PBXBuildFile; fileRef = 1D82A79A1658F6960070EBC8 /* Doodle3D.ini */; };
 		1D83E086158A505D005F0922 /* ofxIniSettings.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 1D83E07B158A505D005F0922 /* ofxIniSettings.cpp */; };
 		1D83E087158A505D005F0922 /* ofxGCode.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 1D83E07F158A505D005F0922 /* ofxGCode.cpp */; };
 		1D83E088158A505D005F0922 /* ofxExtras.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 1D83E083158A505D005F0922 /* ofxExtras.cpp */; };
@@ -14,7 +23,6 @@
 		1DC9E35116425B5100A90E2A /* ofxHTTPServer.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 1DC9E34816425B5100A90E2A /* ofxHTTPServer.cpp */; };
 		1DC9E3571642658A00A90E2A /* libmicrohttpd.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 1DC9E3561642658A00A90E2A /* libmicrohttpd.a */; };
 		BBAB23CB13894F3D00AA2426 /* GLUT.framework in CopyFiles */ = {isa = PBXBuildFile; fileRef = BBAB23BE13894E4700AA2426 /* GLUT.framework */; };
-		E4328149138ABC9F0047C5CB /* openFrameworksDebug.a in Frameworks */ = {isa = PBXBuildFile; fileRef = E4328148138ABC890047C5CB /* openFrameworksDebug.a */; };
 		E45BE97B0E8CC7DD009D7055 /* AGL.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = E45BE9710E8CC7DD009D7055 /* AGL.framework */; };
 		E45BE97C0E8CC7DD009D7055 /* ApplicationServices.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = E45BE9720E8CC7DD009D7055 /* ApplicationServices.framework */; };
 		E45BE97D0E8CC7DD009D7055 /* AudioToolbox.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = E45BE9730E8CC7DD009D7055 /* AudioToolbox.framework */; };
@@ -68,6 +76,15 @@
 		1D0909851593097C000DE10D /* Side.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Side.h; sourceTree = "<group>"; };
 		1D09098615931547000DE10D /* Files.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Files.h; sourceTree = "<group>"; };
 		1D09098815931954000DE10D /* Printer.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Printer.h; sourceTree = "<group>"; };
+		1D82A79A1658F6960070EBC8 /* Doodle3D.ini */ = {isa = PBXFileReference; lastKnownFileType = text; name = Doodle3D.ini; path = bin/data/Doodle3D.ini; sourceTree = "<group>"; };
+		1D82A79C1658F6960070EBC8 /* bg.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = bg.png; sourceTree = "<group>"; };
+		1D82A79D1658F6960070EBC8 /* bgbusy.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = bgbusy.png; sourceTree = "<group>"; };
+		1D82A79E1658F6960070EBC8 /* Doodle3D.icns */ = {isa = PBXFileReference; lastKnownFileType = image.icns; path = Doodle3D.icns; sourceTree = "<group>"; };
+		1D82A79F1658F6960070EBC8 /* kruis.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = kruis.png; sourceTree = "<group>"; };
+		1D82A7A01658F6960070EBC8 /* krul.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = krul.png; sourceTree = "<group>"; };
+		1D82A7A11658F6960070EBC8 /* mask.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = mask.png; sourceTree = "<group>"; };
+		1D82A7A21658F6960070EBC8 /* thermomask.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = thermomask.png; sourceTree = "<group>"; };
+		1D82A7B21658F8550070EBC8 /* openFrameworks.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = openFrameworks.a; path = ../../../libs/openFrameworksCompiled/lib/osx/openFrameworks.a; sourceTree = "<group>"; };
 		1D83E07A158A505D005F0922 /* install.xml */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xml; path = install.xml; sourceTree = "<group>"; };
 		1D83E07B158A505D005F0922 /* ofxIniSettings.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ofxIniSettings.cpp; sourceTree = "<group>"; };
 		1D83E07C158A505D005F0922 /* ofxIniSettings.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ofxIniSettings.h; sourceTree = "<group>"; };
@@ -90,6 +107,7 @@
 		1DC9E34816425B5100A90E2A /* ofxHTTPServer.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ofxHTTPServer.cpp; sourceTree = "<group>"; };
 		1DC9E34916425B5100A90E2A /* ofxHTTPServer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ofxHTTPServer.h; sourceTree = "<group>"; };
 		1DC9E3561642658A00A90E2A /* libmicrohttpd.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libmicrohttpd.a; path = addons/ofxHttpServer/libs/microhttpd/lib/macosx/libmicrohttpd.a; sourceTree = "<group>"; };
+		1DD6B6FB165CC3C800C10FE1 /* Doodle3DDebug.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Doodle3DDebug.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		BBAB23BE13894E4700AA2426 /* GLUT.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = GLUT.framework; path = ../../../libs/glut/lib/osx/GLUT.framework; sourceTree = "<group>"; };
 		E4328143138ABC890047C5CB /* openFrameworksLib.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = openFrameworksLib.xcodeproj; path = ../../../libs/openFrameworksCompiled/project/osx/openFrameworksLib.xcodeproj; sourceTree = SOURCE_ROOT; };
 		E45BE9710E8CC7DD009D7055 /* AGL.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AGL.framework; path = /System/Library/Frameworks/AGL.framework; sourceTree = "<absolute>"; };
@@ -101,7 +119,6 @@
 		E45BE9770E8CC7DD009D7055 /* CoreServices.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreServices.framework; path = /System/Library/Frameworks/CoreServices.framework; sourceTree = "<absolute>"; };
 		E45BE9790E8CC7DD009D7055 /* OpenGL.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = OpenGL.framework; path = /System/Library/Frameworks/OpenGL.framework; sourceTree = "<absolute>"; };
 		E45BE97A0E8CC7DD009D7055 /* QuickTime.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = QuickTime.framework; path = /System/Library/Frameworks/QuickTime.framework; sourceTree = "<absolute>"; };
-		E4B69B5B0A3A1756003C02F2 /* Doodle3DDebug.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Doodle3DDebug.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		E4B69E1D0A3A1BDC003C02F2 /* main.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; name = main.cpp; path = src/main.cpp; sourceTree = SOURCE_ROOT; };
 		E4B6FCAD0C3E899E008CF71C /* openFrameworks-Info.plist */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = text.plist.xml; path = "openFrameworks-Info.plist"; sourceTree = "<group>"; };
 		E4C2424410CC5A17004149E2 /* AppKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AppKit.framework; path = /System/Library/Frameworks/AppKit.framework; sourceTree = "<absolute>"; };
@@ -117,7 +134,6 @@
 			buildActionMask = 2147483647;
 			files = (
 				E4EB6799138ADC1D00A09F29 /* GLUT.framework in Frameworks */,
-				E4328149138ABC9F0047C5CB /* openFrameworksDebug.a in Frameworks */,
 				E45BE97B0E8CC7DD009D7055 /* AGL.framework in Frameworks */,
 				E45BE97C0E8CC7DD009D7055 /* ApplicationServices.framework in Frameworks */,
 				E45BE97D0E8CC7DD009D7055 /* AudioToolbox.framework in Frameworks */,
@@ -131,12 +147,37 @@
 				E4C2424810CC5A17004149E2 /* Cocoa.framework in Frameworks */,
 				E4C2424910CC5A17004149E2 /* IOKit.framework in Frameworks */,
 				1DC9E3571642658A00A90E2A /* libmicrohttpd.a in Frameworks */,
+				1D82A7B31658F8550070EBC8 /* openFrameworks.a in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		1D82A77B1658F3740070EBC8 /* Resources */ = {
+			isa = PBXGroup;
+			children = (
+				1D82A79A1658F6960070EBC8 /* Doodle3D.ini */,
+				1D82A79B1658F6960070EBC8 /* images */,
+			);
+			name = Resources;
+			sourceTree = "<group>";
+		};
+		1D82A79B1658F6960070EBC8 /* images */ = {
+			isa = PBXGroup;
+			children = (
+				1D82A79C1658F6960070EBC8 /* bg.png */,
+				1D82A79D1658F6960070EBC8 /* bgbusy.png */,
+				1D82A79E1658F6960070EBC8 /* Doodle3D.icns */,
+				1D82A79F1658F6960070EBC8 /* kruis.png */,
+				1D82A7A01658F6960070EBC8 /* krul.png */,
+				1D82A7A11658F6960070EBC8 /* mask.png */,
+				1D82A7A21658F6960070EBC8 /* thermomask.png */,
+			);
+			name = images;
+			path = bin/data/images;
+			sourceTree = "<group>";
+		};
 		1D83E078158A505D005F0922 /* ofxUltimaker */ = {
 			isa = PBXGroup;
 			children = (
@@ -305,6 +346,7 @@
 		E4B69B4A0A3A1720003C02F2 = {
 			isa = PBXGroup;
 			children = (
+				1D82A77B1658F3740070EBC8 /* Resources */,
 				1DC9E3561642658A00A90E2A /* libmicrohttpd.a */,
 				E4B6FCAD0C3E899E008CF71C /* openFrameworks-Info.plist */,
 				E4EB6923138AFD0F00A09F29 /* Project.xcconfig */,
@@ -312,7 +354,7 @@
 				E4EEC9E9138DF44700A80321 /* openFrameworks */,
 				BB4B014C10F69532006C3DED /* addons */,
 				E45BE5980E8CC70C009D7055 /* frameworks */,
-				E4B69B5B0A3A1756003C02F2 /* Doodle3DDebug.app */,
+				1DD6B6FB165CC3C800C10FE1 /* Doodle3DDebug.app */,
 			);
 			sourceTree = "<group>";
 		};
@@ -333,6 +375,7 @@
 		E4EEC9E9138DF44700A80321 /* openFrameworks */ = {
 			isa = PBXGroup;
 			children = (
+				1D82A7B21658F8550070EBC8 /* openFrameworks.a */,
 				E4EB691F138AFCF100A09F29 /* CoreOF.xcconfig */,
 				E4328143138ABC890047C5CB /* openFrameworksLib.xcodeproj */,
 			);
@@ -350,6 +393,7 @@
 				E4B69B590A3A1756003C02F2 /* Frameworks */,
 				E4B6FFFD0C3F9AB9008CF71C /* ShellScript */,
 				E4C2427710CC5ABF004149E2 /* CopyFiles */,
+				1D82A76D1658F0E80070EBC8 /* Resources */,
 			);
 			buildRules = (
 			);
@@ -358,7 +402,7 @@
 			);
 			name = Doodle3D;
 			productName = myOFApp;
-			productReference = E4B69B5B0A3A1756003C02F2 /* Doodle3DDebug.app */;
+			productReference = 1DD6B6FB165CC3C800C10FE1 /* Doodle3DDebug.app */;
 			productType = "com.apple.product-type.application";
 		};
 /* End PBXNativeTarget section */
@@ -367,7 +411,7 @@
 		E4B69B4C0A3A1720003C02F2 /* Project object */ = {
 			isa = PBXProject;
 			attributes = {
-				LastUpgradeCheck = 0430;
+				LastUpgradeCheck = 0450;
 			};
 			buildConfigurationList = E4B69B4D0A3A1720003C02F2 /* Build configuration list for PBXProject "Doodle3D" */;
 			compatibilityVersion = "Xcode 3.2";
@@ -404,6 +448,24 @@
 			sourceTree = BUILT_PRODUCTS_DIR;
 		};
 /* End PBXReferenceProxy section */
+
+/* Begin PBXResourcesBuildPhase section */
+		1D82A76D1658F0E80070EBC8 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				1D82A7AB1658F7E10070EBC8 /* bg.png in Resources */,
+				1D82A7B11658F7F00070EBC8 /* thermomask.png in Resources */,
+				1D82A7B51658F88D0070EBC8 /* Doodle3D.ini in Resources */,
+				1D82A7B01658F7EE0070EBC8 /* mask.png in Resources */,
+				1D82A7AE1658F7E70070EBC8 /* kruis.png in Resources */,
+				1D82A7AF1658F7EC0070EBC8 /* krul.png in Resources */,
+				1D82A7AD1658F7E50070EBC8 /* Doodle3D.icns in Resources */,
+				1D82A7AC1658F7E30070EBC8 /* bgbusy.png in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
 
 /* Begin PBXShellScriptBuildPhase section */
 		E4B6FFFD0C3F9AB9008CF71C /* ShellScript */ = {
@@ -466,6 +528,8 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = NO;
 				GCC_WARN_UNUSED_VALUE = NO;
 				GCC_WARN_UNUSED_VARIABLE = NO;
+				INFOPLIST_FILE = "openFrameworks-Info.plist";
+				INFOPLIST_PREPROCESS = NO;
 				MACOSX_DEPLOYMENT_TARGET = 10.5;
 				ONLY_ACTIVE_ARCH = YES;
 				OTHER_CPLUSPLUSFLAGS = (
@@ -476,7 +540,7 @@
 					"$(OF_CORE_LIBS)",
 					"\"$(SRCROOT)/addons/ofxHttpServer/libs/microhttpd/lib/macosx/libmicrohttpd.a\"",
 				);
-				SDKROOT = macosx10.6;
+				SDKROOT = macosx;
 			};
 			name = Debug;
 		};
@@ -502,6 +566,8 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = NO;
 				GCC_WARN_UNUSED_VALUE = NO;
 				GCC_WARN_UNUSED_VARIABLE = NO;
+				INFOPLIST_FILE = "openFrameworks-Info.plist";
+				INFOPLIST_PREPROCESS = NO;
 				MACOSX_DEPLOYMENT_TARGET = 10.5;
 				ONLY_ACTIVE_ARCH = YES;
 				OTHER_CPLUSPLUSFLAGS = (
@@ -512,13 +578,14 @@
 					"$(OF_CORE_LIBS)",
 					"\"$(SRCROOT)/addons/ofxHttpServer/libs/microhttpd/lib/macosx/libmicrohttpd.a\"",
 				);
-				SDKROOT = macosx10.6;
+				SDKROOT = macosx;
 			};
 			name = Release;
 		};
 		E4B69B600A3A1757003C02F2 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				COMBINE_HIDPI_IMAGES = YES;
 				COPY_PHASE_STRIP = NO;
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
@@ -600,6 +667,7 @@
 					"\"$(SRCROOT)/addons/ofxHttpServer/libs/microhttpd/lib/macosx\"",
 					"\"$(SRCROOT)/addons/ofxHttpServer/libs/microhttpd/lib/win32\"",
 					"\"$(SRCROOT)/../../../../../../Downloads/tmp\"",
+					"\"$(SRCROOT)/../../../libs/openFrameworksCompiled/lib/osx\"",
 				);
 				ONLY_ACTIVE_ARCH = YES;
 				PRODUCT_NAME = Doodle3DDebug;
@@ -610,6 +678,7 @@
 		E4B69B610A3A1757003C02F2 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				COMBINE_HIDPI_IMAGES = YES;
 				COPY_PHASE_STRIP = YES;
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
@@ -690,6 +759,7 @@
 					"\"$(SRCROOT)/addons/ofxHttpServer/libs/microhttpd/lib/macosx\"",
 					"\"$(SRCROOT)/addons/ofxHttpServer/libs/microhttpd/lib/win32\"",
 					"\"$(SRCROOT)/../../../../../../Downloads/tmp\"",
+					"\"$(SRCROOT)/../../../libs/openFrameworksCompiled/lib/osx\"",
 				);
 				ONLY_ACTIVE_ARCH = YES;
 				PRODUCT_NAME = Doodle3D;
