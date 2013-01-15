@@ -18,10 +18,19 @@ public:
         string folder = ofFilePath::getPathForDirectory("~/Documents/Doodle3D/");
         ofDirectory::createDirectory(folder);
         ofDirectory::createDirectory(folder + "doodles/");
+        ofDirectory::createDirectory(folder + "gcode/");
+        
+        //copy Doodle3D.ini, start.gcode, end.gcode
+        //RICK: I fixed the copyTo function in ofFileUtils.cpp
+        //ofFile("Doodle3D.ini").copyTo(folder + "Doodle3D.ini"); //overwrite disabled by default, use full path with filename for destination
+        ofFile("start.gcode").copyTo(folder + "gcode/start.gcode");
+        ofFile("end.gcode").copyTo(folder + "gcode/end.gcode");
+        
+        //now change the data path to Documents/Doodle3D
         ofSetDataPathRoot(folder);
         
         doodlesFolder = ofToDataPath(ini.get("doodlesFolder","doodles"));
-                
+        
         listDir();
         
         //auto load image
@@ -96,7 +105,7 @@ public:
         if (points.size()<2) return;
         bool isLoop = points.front()->distance(*points.back())<25;
         //cout << filename << ", loop=" << isLoop << endl;
-        //        ofxSimplifyPath(path);
+        ofxSimplifyPath(path); //dit stond uit
     }
     
     void load(string filename) {

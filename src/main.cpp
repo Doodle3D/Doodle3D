@@ -24,6 +24,11 @@ int serverPort;
 bool autoDetectDeviceName=false;
 bool showStatusMessage=true;
 bool connectionFailed=false;
+float globalScale=1;
+map<string,string> params;
+int deviceSpeed;
+int simplifyIterations,simplifyMinNumPoints;
+float simplifyMinDistance;
 
 float scaleFunction(float f) {
     //return minScale; //ofMap(f,0,1,minScale,maxScale);
@@ -56,9 +61,22 @@ public:
     ofSerial tmp;
 
     void setup() {
+        //ofSetLogLevel(OF_LOG_NOTICE);
+        
         ofSetDataPathRoot("../Resources/");
         
-        loadSettings();
+        loadSettings("Doodle3D.ini");
+
+//        params["loadSettings"] = "BartProtobox.ini";
+//        params["loadSettings"] = "RickUltimaker.ini";
+        
+        if (params["loadSettings"]!="") {
+            string folder = ofFilePath::getPathForDirectory("~/Documents/Doodle3D/");
+            loadSettings(folder+params["loadSettings"]);
+//            cout << "load settings: " << (folder+params["loadSettings"]) << endl;
+            //ofSystemAlertDialog(folder+params["loadSettings"]);
+        }
+        
         
         btnNew.setup(0xffff00);
         btnSave.setup(0x00ff00);
@@ -83,26 +101,81 @@ public:
         mask.loadImage("mask.png");
         
 //        ofSetLogLevel(OF_LOG_NOTICE);
+
+//        cout << "PARAMS:" << endl;
+        //for (int i=0; i<params.size(); i++)
         
         ofEnableAlphaBlending();
-        ofSetWindowPosition(0,0);
+        //ofSetWindowPosition(0,0);
+        //ofxSetWindowShape(ini.get("window",ofRectangle(0,0,1280,800));
+        
+        
+        ofRectangle window = ini.get("window",ofRectangle(0,0,1280,800));
+//        ofSystemAlertDialog(ofxToString(window));
+        ofxSetWindowRect(window);
+
+        //
+//        if (params["fullscreen"]!="") {
+//            ofSetFullscreen(ofxToBoolean(params["fullscreen"]));
+//        } else {
+//            ofSetFullscreen(ini.get("fullscreen",true));
+//        }
+        
         ofSetFullscreen(ini.get("fullscreen",true));
+        
         ofSetFrameRate(ini.get("frameRate", 30));
         ofSetEscapeQuitsApp(ini.get("quitOnEscape",true));
         ofEnableSmoothing();
         
+//        if (params["window"]!="") {
+//        
+//        }
+//        
+//        ofxSetWindowRect(ofxToRectangle(params["window"]));
+        
+//        if (params["deviceSpeed"]!="") {
+//            deviceSpeed = ofToInt(params["deviceSpeed"]);
+//        } else {
+//        }
+        deviceSpeed = ini.get("device.speed",115200);
+
+//        if (params["device"]!="") {
+//            deviceName = params["device"];
+//        } else
+        
         if (ini.get("autoDetectDeviceName",true)) {
-            ultimaker.autoConnect();
+            deviceName = detectDeviceName();
         } else {
-            ultimaker.connect(ini.get("device.name",""),115200);
+            deviceName = ini.get("device.name","");
+        }
+        
+        simplifyIterations = ini.get("simplifyIterations",10);
+        simplifyMinNumPoints = ini.get("simplifyMinNumPoints",15);
+        simplifyMinDistance = ini.get("simplifyMinDistance",10);
+        
+//        ofSystemAlertDialog(deviceName);
+//        ofSystemAlertDialog(ofToString(deviceSpeed));
+
+        
+        if (deviceName!="") {
+            string str = "connecting to " + deviceName + " @ " + ofToString(deviceSpeed) + "bps";
+            cout << str << endl;
+            //ofSystemAlertDialog(str);
+            ultimaker.connect(deviceName,deviceSpeed);
         }
         
         server = ofxHTTPServer::getServer(); // get the instance of the server
-        server->setServerRoot("www");		 // folder with files to be served
+        server->setServerRoot(".");		 // folder with files to be served
         server->setUploadDir("upload");		 // folder to save uploaded files
         server->setCallbackExtension("of");	 // extension of urls that aren't files but will generate a post or get event
         server->setListener(*this);
-        server->start(ini.get("server.port",serverPort));
+        
+        if (params["serverPort"]!="") serverPort = ofToInt(params["serverPort"]);
+        else serverPort = ini.get("server.port",serverPort);
+
+        server->start(serverPort);
+        
+        cout << "running webserver at port: " << serverPort << endl;
         
         ofBackground(255);
         
@@ -122,6 +195,20 @@ public:
 //        ofstream file(filename.c_str(),ios::out);
 //        file << "test" << endl;
 //        file.close();
+//        ofSetLogLevel(OF_LOG_WARNING);
+    }
+    
+    string detectDeviceName() {
+        ofSerial serial;
+        vector<ofSerialDeviceInfo> devices = serial.getDeviceList();
+
+        for (int i=0; i<devices.size(); i++){
+            if (devices[i].getDeviceName().find("usbmodem")!=string::npos ||
+                devices[i].getDeviceName().find("usbserial")!=string::npos) { //osx
+                return devices[i].getDeviceName();
+            }
+        }
+        return "";
     }
     
     void getRequest(ofxHTTPServerResponse & response){
@@ -136,6 +223,8 @@ public:
         
         string data = response.requestFields["data"];
         
+        cout << "DATA: " << data << endl;
+        
         vector<string> items = ofSplitString(data,"\nBEGIN\n");
         items = ofSplitString(items[items.size()-1],"\n\nEND\n");
 
@@ -149,11 +238,20 @@ public:
 
 
     void update() {
-        
+        if (connectionFailed) thermometer.visible = false;
+            
         canvas.update();
         
         if (ini.get("autoWarmUp",true) && ofGetFrameNum()==100) {
-            ultimaker.send("M109 S" + ofToString(targetTemperature));
+            if (deviceSpeed==57600) {
+                ultimaker.send("M104 S" + ofToString(targetTemperature));
+            } else {
+                ultimaker.send("M109 S" + ofToString(targetTemperature));
+            }
+        }
+
+        if (deviceSpeed==57600 && !ultimaker.isBusy && ofGetFrameNum()>100 && ofGetFrameNum()%120==0) {
+            ultimaker.readTemperature();
         }
         
         if (btnZoomIn.selected) canvas.zoom(1);
@@ -177,11 +275,22 @@ public:
 
     void draw() {
         ofSetupScreenOrtho(0,0,OF_ORIENTATION_UNKNOWN,true,-200,200);
+        
+        
+        ofScale(globalScale,globalScale);
+
+        
         ofSetColor(255);
         
         if (connectionFailed) bg.draw(0,0);
-        else if (ultimaker.isBusy || !ultimaker.isStartTagFound || (ini.get("autoWarmUp",true) && ofGetFrameNum()<100)) bg_busy.draw(0,0);
-        else bg.draw(0,0);
+        else if (ultimaker.temperature<targetTemperature ||
+                 ultimaker.isBusy ||
+                 !ultimaker.isStartTagFound ||
+                 (ini.get("autoWarmUp",true) && ofGetFrameNum()<100)) {
+             bg_busy.draw(0,0);
+        } else {
+             bg.draw(0,0);
+        }
         
         canvas.draw();
         if (debug) canvas.drawDebug();
@@ -210,8 +319,10 @@ public:
         if (showDeviceName && !autoDetectDeviceName) ofDrawBitmapString(deviceName, 20,35);
     }
 
-    void loadSettings() {
-        ini.load("Doodle3D.ini");
+    void loadSettings(string filename) {
+        ini.load(filename);
+        
+        //ofSystemAlertDialog("loadSettings: "+filename);
 
         targetTemperature = ini.get("targetTemperature",220);
         objectHeight = ini.get("objectHeight",40.0f);
@@ -233,7 +344,7 @@ public:
         printer.zOffset = ini.get("zOffset",0.0f);
         printer.useSubLayers = ini.get("useSubLayers",true);
         twists = ini.get("twists",0.0f);
-        printer.filamentThickness = ini.get("filamentThickness",2.89f)/10; ////waarom /10 ????
+        printer.filamentThickness = ini.get("filamentThickness",2.89f);
         printer.minimalDistanceForRetraction = ini.get("minimalDistanceForRetraction",5);
         printer.retraction = ini.get("retraction",2);
         printer.retractionSpeed = ini.get("retractionSpeed",100)*60;
@@ -253,15 +364,24 @@ public:
         ultimaker.startPrint();
         //M84
     }
+    
+    void print() {
+        ofxSimplifyPath(path,simplifyIterations,simplifyMinNumPoints,simplifyMinDistance);
+        side.is3D=false;
+        printer.print();
+    }
 
     void mousePressed(int x, int y, int button) {
+        x /= globalScale;
+        y /= globalScale;
+        
         canvas.mousePressed(x, y, button);
         side.mousePressed(x, y, button);
         if (btnNew.hitTest(x,y)) { files.cur=-1; canvas.clear(); files.unloadFile(); }
         if (btnSave.hitTest(x,y)) files.save();
         if (btnLoadPrevious.hitTest(x,y)) files.loadPrevious();
         if (btnLoadNext.hitTest(x,y)) files.loadNext();
-        if (btnPrint.hitTest(x,y)) printer.print();
+        if (btnPrint.hitTest(x,y)) print();
         if (btnStop.hitTest(x,y)) stop();
         if (btnOops.hitTest(x,y)) { btnOops.selected=true; }
         if (btnZoomIn.hitTest(x,y)) btnZoomIn.selected=true;
@@ -274,12 +394,18 @@ public:
     }
 
     void mouseDragged(int x, int y, int button) {
+        x /= globalScale;
+        y /= globalScale;
+        
         canvas.mouseDragged(x, y, button);
         side.mouseDragged(x, y, button);
     }
 
     void mouseReleased(int x, int y, int button) {
-        ofxSimplifyPath(path);
+        x /= globalScale;
+        y /= globalScale;
+        
+        ofxSimplifyPath(path,simplifyIterations,simplifyMinNumPoints,simplifyMinDistance);
         side.mouseReleased(x, y, button);
         canvas.mouseReleased(x, y, button);
         btnOops.selected=false;
@@ -298,14 +424,36 @@ public:
         system(cmd.c_str());
     }
 
+    void showHelp() {
+        ofSystemAlertDialog("On your phone or tablet connect to the '" + getWirelessNetwork() + "' network.\nIn the webbrowser open: http://" + getIP() + ":8888");
+    }
+    
+    
+    string ofxExecute(string cmd) {
+        string result;
+        char line[130];
+        FILE *fp = popen(cmd.c_str(), "r");
+        while (fgets( line, sizeof line, fp)) result += line;
+        pclose(fp);
+        return ofxTrimString(result);
+    }
+    
+    string getIP() {
+        return ofxExecute("ifconfig en1 | grep 'inet ' | cut -d ' ' -f2");
+    }
+
+    string getWirelessNetwork() {
+        return ofxExecute("networksetup -getairportnetwork en1 | cut -c 24-");
+    }
+
     void keyPressed(int key) {
         switch (key) {
-            case '*': loadSettings(); break;
-            case '/': case '\\': case '$': case '#': case '|': case '%': case '@': case '^': case '&': side.setShape(key); break;
+            case '/': case '\\': case '$': case '#': case '|': case '%': case '@': case '^': case '&': case '_': side.setShape(key); break;
             case '3': side.is3D=!side.is3D; break;
             case '<': twists-=.5; break;
             case '>': twists+=.5; break;
-            case '?': twists=0; break;
+            case '\'': twists=0; break;
+            case '?': showHelp(); break;
             case 'a': side.toggle(); break;
             case 'b': useSubpathColors=!useSubpathColors; break;
             case 'C': canvas.createCircle(); break;
@@ -318,7 +466,7 @@ public:
             case 'l': files.loadNext(); break;
             case 'L': files.loadPrevious(); break;
             case 'o': files.load(); break;
-            case 'p': case 'm': case OF_KEY_RETURN: side.is3D=false; printer.print(); break;
+            case 'p': case 'm': case OF_KEY_RETURN: print(); break;
             case 'q': stop(); break;
             case 'r': ultimaker.setRelative(); break;
             case 'S': files.save(); break;
@@ -329,12 +477,21 @@ public:
             case ' ': files.listDir(); break;
         }
     }
+    
+    void windowResized(int w, int h) {
+        globalScale = w/1280.0;
+    }
 
 };
 
 //ofxEndApp();
 
-int main() {
+int main(int argc, const char** argv){
+    for (int i=0; i<argc; i++) {
+        vector<string> keyvalue = ofSplitString(argv[i], "=");
+        if (keyvalue.size()==2) params[keyvalue[0]] = keyvalue[1];
+    }
+    
     ofAppGlutWindow window;
     window.setGlutDisplayString("rgba double samples>=4");
     ofSetupOpenGL(&window, 1280, 800, OF_WINDOW);

@@ -15,7 +15,6 @@ public:
         circleDetail = ini.get("circleDetail",16);
         path.setFilled(false);
         path.setCurveResolution(100);
-        path.setStrokeWidth(2);
         path.setStrokeColor(0);
     }
     
@@ -30,7 +29,7 @@ public:
             for (int i=0; i<subpaths.size(); i++) {
                 vector<ofSubPath::Command> &commands = subpaths[i].getCommands();
                 ofNoFill();
-                ofSetLineWidth(2);
+                ofSetLineWidth(2*globalScale);
                 ofSetColor(ofColor::fromHsb(float(i)/subpaths.size()*255, 255, 255));
                 ofBeginShape();
                 for (int j=0; j<commands.size(); j++) {
@@ -39,7 +38,10 @@ public:
                 ofEndShape();
             }
         } else {
-            if (subpaths.size()>0) path.draw(0,0);
+            if (subpaths.size()>0) {
+                path.setStrokeWidth(2*globalScale);
+                path.draw(0,0);
+            }
         }
         
         if (subpaths.size()>1) {

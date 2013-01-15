@@ -34,8 +34,8 @@ public:
             if (is3D) {
                 ofPushMatrix();
                 
-                ofSetLineWidth(1);
-                vpath.setStrokeWidth(1);
+                ofSetLineWidth(1*globalScale);
+                vpath.setStrokeWidth(1*globalScale);
                 vpath.setStrokeColor(ofColor(0,0,0,60));
                 
                 //draw path
@@ -54,7 +54,7 @@ public:
                     for (int i=0; i<subpaths.size(); i++) {
                         vector<ofSubPath::Command> &commands = subpaths[i].getCommands();
                         ofNoFill();
-                        ofSetLineWidth(1);
+                        ofSetLineWidth(1*globalScale);
                         if (useSubpathColors) {
                             ofSetColor(ofColor::fromHsb(float(i)/subpaths.size()*255, 255, 255, 60));
                         } else {
@@ -88,7 +88,7 @@ public:
                 //
             }
             
-            ofSetLineWidth(2);
+            ofSetLineWidth(2*globalScale);
             ofSetColor(0);
             
             glBegin(GL_LINE_STRIP);
@@ -129,6 +129,7 @@ public:
             if (c=='$') vfunc[i]=ofMap(-sin(1*ii*TWO_PI),-1,1,minScale,maxScale);
             if (c=='#') vfunc[i]=ofMap(-sin(2*ii*TWO_PI),-1,1,minScale,maxScale);
             if (c=='%') vfunc[i]=ofMap(-sin(4*ii*TWO_PI),-1,1,minScale,maxScale);
+            if (c=='_') vfunc[i]=ofMap(-sin(8*ii*TWO_PI-HALF_PI),-1,1,minScale,maxScale);
             if (c=='&') vfunc[i]=ofMap(-sin(8*ii*TWO_PI),-1,1,minScale,maxScale);
             if (c=='@') vfunc[i]=ofMap(ii*ii,0,1,minScale,maxScale);
             if (c=='^') vfunc[i]=ofMap(asin(sin(3*ii*TWO_PI)),-PI/2,PI/2,minScale,maxScale);
@@ -139,7 +140,10 @@ public:
         isDrawing = bounds.inside(x,y);
     }
     
+
+    
     void mouseDragged(int x, int y, int button) {
+
         if (!visible) return;
         if (!isDrawing) return;
         

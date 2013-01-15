@@ -15,6 +15,7 @@ public:
     float retraction;
     float retractionSpeed;
     bool loopAlways;
+    bool enableTraveling;
     
     void setup() {
         //settings loaded in loadSettings
@@ -46,26 +47,29 @@ public:
             float progress=float(layer)/layers;
             float layerScale = scaleFunction(float(layer)/layers);
             bool isLoop = points.front()->distance(*points.back())<3;
-                        
+
             p.translate(-ofxGetCenterOfMass(points));
             p.scale(screenToMillimeterScale,-screenToMillimeterScale);
             p.scale(layerScale,layerScale);
             p.rotate(twists*progress*360,ofVec3f(0,0,1));
 
-            float simplifyIterationsDuringPrint = ini.get("simplifyIterationsDuringPrint",10);
-            float simplifyDistanceDuringPrint = ini.get("simplifyDistanceDuringPrint",0.0f);
-            if (simplifyDistanceDuringPrint!=0) ofxSimplifyPath(p,simplifyIterationsDuringPrint,10,simplifyDistanceDuringPrint); //10 iterations, leave minimal 10 points, otherwise max distance of ...mm
+//            float simplifyIterationsDuringPrint = ini.get("simplifyIterationsDuringPrint",10);
+//            float simplifyDistanceDuringPrint = ini.get("simplifyDistanceDuringPrint",0.0f);
+//            if (simplifyDistanceDuringPrint!=0) ofxSimplifyPath(p,simplifyIterationsDuringPrint,10,simplifyDistanceDuringPrint); //10 iterations, leave minimal 10 points, otherwise max distance of ...mm
             
             subpaths = p.getSubPaths();
             points = ofxGetPointsFromPath(p);
             
             if (layer==0) {
+                gcode.add("M107");
                 if (ini.get("firstLayerSlow",true)) gcode.add("M220 S80"); //slow speed
             } else if (layer==1) {
                 gcode.add("M106");      //fan on
                 gcode.add("M220 S100"); //normal speed
                 //gcode.add("G92 Z"+ofToString(layerHeight)); //??
             }
+            
+            enableTraveling = ini.get("enableTraveling",true);
             
             int curLayerCommand=0;
             int totalLayerCommands=points.size();
@@ -95,17 +99,18 @@ public:
                     //if (!isLoop && i==0) cout << prev.distance(to) << endl;
                                         
                     float sublayer = layer==0 ? 0 : layer + (useSubLayers ? float(curLayerCommand)/totalLayerCommands : 0); //
-                    float z = sublayer*layerHeight+zOffset;
+                    float z = sublayer*layerHeight+zOffset; //zOffset kan niet <0
+                    //cout << "z: " << z << endl;
                     bool isTraveling = !isLoop && i==0 && prev.distance(to)>minimalDistanceForRetraction;
                     float speed = isTraveling ? travelrate : feedrate;
                     
-                    if (isTraveling) {
+                    if (enableTraveling && isTraveling) {
                          gcode.addCommandWithParams("G1 E%03f F%03f", extruder-retraction, retractionSpeed);   
                          gcode.addCommandWithParams("G1 X%03f Y%03f Z%03f F%03f", to.x, to.y, z, speed);
                          gcode.addCommandWithParams("G1 E%03f F%03f", extruder, retractionSpeed);
                     }
                     else {
-                        extruder += prev.distance(to) * filamentThickness * wallThickness * layerHeight;   
+                        extruder += prev.distance(to) * wallThickness * layerHeight / filamentThickness;
                         gcode.addCommandWithParams("G1 X%03f Y%03f Z%03f F%03f E%03f", to.x, to.y, z, speed, extruder);
                     }                    
                     
