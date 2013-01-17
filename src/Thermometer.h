@@ -6,7 +6,7 @@ class Thermometer {
 public:
     
     ofPoint position;
-    ofImage mask,good,bad,warmup;
+    ofImage bg,mask,good,bad,warmup;
     bool showWarmUp;
     bool visible;
 
@@ -14,10 +14,12 @@ public:
         targetTemperature = 220;
         showWarmUp = false;
         visible = true;
+        showWarmUp = false;
     }
     
     void setup() {
         position.set(1105,506);
+        bg.loadImage("thermobg.png");
         mask.loadImage("thermomask.png");
         good.loadImage("krul.png");
         bad.loadImage("kruis.png");
@@ -31,6 +33,8 @@ public:
         ofPushStyle();
         ofPushMatrix();
         ofTranslate(position);
+        ofSetColor(255);
+        bg.draw(0,0);
         ofSetColor(255,0,0);
         ofRect(1,mask.height-level,mask.width-1,level);
         ofSetColor(255);

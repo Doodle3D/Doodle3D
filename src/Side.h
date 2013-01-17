@@ -10,9 +10,27 @@ public:
     bool visible;
     bool is3D;
     bool isDrawing;
+    float vStep;
+    int numVertices;
+    
+    Side() {
+        visible=true;
+        is3D=true;
+        isDrawing=false;
+        bounds = ofRectangle(900,210,131,390);
+        border = ofRectangle(880,170,2,470);
+        vStep = 1;
+    }
     
     void draw() {
         if (!visible) return;
+        
+        //resolution of rendering of vertical shape
+        if (numVertices>10000) vStep = ofMap(numVertices,10000,100000,1,10,true);
+        else vStep=1;
+//        else if (ofGetFrameRate()<20) vStep = 10;
+//        else vStep = 1;
+        
         ofPushStyle();
         ofPushMatrix();
         
@@ -24,6 +42,9 @@ public:
 
         ofPath vpath = path;
         vector<ofPoint*> points = ofxGetPointsFromPath(vpath);
+        
+        numVertices = points.size() * objectHeight;
+        
         ofRectangle pathBounds = ofxGetBoundingBox(points);
         ofPoint center = pathBounds.getCenter();
         vpath.translate(-center);
@@ -39,7 +60,7 @@ public:
                 vpath.setStrokeColor(ofColor(0,0,0,60));
                 
                 //draw path
-                for (int i=0,n=bounds.height; i<n; i+=1) {
+                for (float i=0,n=bounds.height; i<n; i+=vStep) {
                     float ii=float(i)/n;
                     ofPushMatrix();
                     ofTranslate(0,-i);
@@ -52,7 +73,7 @@ public:
                     
                     vector<ofSubPath> &subpaths = spath.getSubPaths();
                     for (int i=0; i<subpaths.size(); i++) {
-                        vector<ofSubPath::Command> &commands = subpaths[i].getCommands();
+                        vector<ofSubPath::Command> &commands = subpaths[int(i)].getCommands();
                         ofNoFill();
                         ofSetLineWidth(1*globalScale);
                         if (useSubpathColors) {
@@ -140,29 +161,25 @@ public:
         isDrawing = bounds.inside(x,y);
     }
     
-
-    
-    void mouseDragged(int x, int y, int button) {
-
+    void mouseDragged(int x, int y, int button) { //mouse values are always scaled to 0..1280 x 0..800 range
         if (!visible) return;
         if (!isDrawing) return;
         
-        float mx = ofClamp(ofGetMouseX() - bounds.x, 0, bounds.width);
-        float my = ofClamp(ofGetMouseY() - bounds.y, 0, bounds.height);
-        float pmy = ofClamp(ofGetPreviousMouseY() - bounds.y, 0, bounds.height);
-                
+        float mx = ofClamp(ofGetMouseX()/globalScale - bounds.x, 0, bounds.width);
+        float my = ofClamp(ofGetMouseY()/globalScale - bounds.y, 0, bounds.height);
+        float pmy = ofClamp(ofGetPreviousMouseY()/globalScale - bounds.y, 0, bounds.height);
         int yy = int(ofMap(my,0,bounds.height, 0, vres-1, true));
         int pyy = int(ofMap(pmy,0,bounds.height, 0, vres-1, true));
+        float xx = fabs(ofMap(ofGetMouseX()/globalScale, bounds.x, bounds.x+bounds.width, -1, 1, true));
         
-        float xx = fabs(ofMap(ofGetMouseX(),bounds.x, bounds.x+bounds.width, -1, 1, true));
-        
-        xx = ofMap(xx,0,1,minScale,maxScale,true);
+        xx = ofMap(xx,-1,1,minScale,maxScale,true); //0...1 of -1...1 ??? er stond 0..1
         
         int minY = min(yy,pyy);
         int maxY = max(yy,pyy);
         
         if (fabs(minY-maxY) < FLT_EPSILON) maxY++; //prevent div 0
 
+        
         vfunc[yy] = xx;
         
         for (int i=minY; i<=maxY; i++) {

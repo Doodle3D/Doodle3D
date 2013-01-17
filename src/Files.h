@@ -7,30 +7,13 @@ public:
     
     int cur;
     ofDirectory dir;
-    //ofDirectory monitor;
-    string doodlesFolder;
+//    string doodlesFolder;
     
     Files() {
         cur=-1;
     }
     
     void setup() {
-        string folder = ofFilePath::getPathForDirectory("~/Documents/Doodle3D/");
-        ofDirectory::createDirectory(folder);
-        ofDirectory::createDirectory(folder + "doodles/");
-        ofDirectory::createDirectory(folder + "gcode/");
-        
-        //copy Doodle3D.ini, start.gcode, end.gcode
-        //RICK: I fixed the copyTo function in ofFileUtils.cpp
-        //ofFile("Doodle3D.ini").copyTo(folder + "Doodle3D.ini"); //overwrite disabled by default, use full path with filename for destination
-        ofFile("start.gcode").copyTo(folder + "gcode/start.gcode");
-        ofFile("end.gcode").copyTo(folder + "gcode/end.gcode");
-        
-        //now change the data path to Documents/Doodle3D
-        ofSetDataPathRoot(folder);
-        
-        doodlesFolder = ofToDataPath(ini.get("doodlesFolder","doodles"));
-        
         listDir();
         
         //auto load image
@@ -43,14 +26,6 @@ public:
                 }
             }
         }
-        
-//        doodlesFolder = ini.get("doodlesFolder","doodles");
-//        if (doodlesFolder!="") {
-//            monitor.reset();
-//            monitor.listDir(doodlesFolder);
-//            cout << "monitor numFiles: " << monitor.numFiles() << endl;
-//        }
-
     }
         
     void listDir() {
@@ -77,11 +52,6 @@ public:
             return load(result.getPath());
         }
     }
-//    
-//    void loadFromString(string str) {
-//        path.clear();
-//        loadFromStrings(ofSplitString(str, "\n")); //or \r
-//    }
     
     void loadFromStrings(vector<string> lines) {
         for (int i=0; i<lines.size(); i++) {
@@ -105,7 +75,8 @@ public:
         if (points.size()<2) return;
         bool isLoop = points.front()->distance(*points.back())<25;
         //cout << filename << ", loop=" << isLoop << endl;
-        ofxSimplifyPath(path); //dit stond uit
+        
+        ofxSimplifyPath(path,simplifyIterations,simplifyMinNumPoints,simplifyMinDistance);
     }
     
     void load(string filename) {
@@ -143,7 +114,7 @@ public:
         //ofSetFullscreen(true);
     }
     
-    void save(string filename) {
+    void save(string filename) {        
         vector<string> lines;
         vector<ofSubPath> &subpaths = path.getSubPaths();
         for (int i=0; i<subpaths.size(); i++) {
@@ -158,8 +129,38 @@ public:
         }
         string filePath = doodlesFolder + "/" + filename;
         ofxSaveStrings(filePath,lines); //will only save file in data/doodles/ folder
+        
+        
+        
         listDir();
+        
         cout << "saved: " << filePath << endl;
+    }
+    
+    void saveSvg(string templateFilename, string outputFilename) { //absolute path is possible
+        
+        ifstream f(ofToDataPath(templateFilename).c_str(),ios::in);
+        stringstream buf;
+        buf << f.rdbuf();
+        string str = buf.str();
+        f.close();
+        
+        //create svg path
+        string strPath;
+        vector<ofSubPath> &subpaths = path.getSubPaths();
+        for (int i=0; i<subpaths.size(); i++) {
+            string line;
+            vector<ofSubPath::Command> &commands = subpaths[i].getCommands();
+            for (int j=0; j<commands.size(); j++) {
+                ofPoint p = commands[j].to; // - ofPoint(bounds.x, bounds.y);
+                p -= ini.get("loadOffset",ofPoint());
+                strPath += (j==0 ? "M":"L") + ofToString(p.x) + " " + ofToString(p.y) + " ";
+            }
+        }
+        
+        str = ofxReplaceString(str, "{PATH}", strPath);
+        
+        ofxSaveString(outputFilename, str);
     }
     
     void unloadFile() {

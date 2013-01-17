@@ -12,26 +12,34 @@ ofxIniSettings ini;
 ofxUltimaker ultimaker;
 ofxGCode gcode;
 const int vres=1000;
-float vfunc[vres],twists,objectHeight,layerHeight;
-float minScale,maxScale,maxScaleDifference,maxObjectHeight;
+float vfunc[vres];
+float twists=0;
+float objectHeight=10;
+float layerHeight=.2;
+float minScale=.8f;
+float maxScale=1.2f;
+float maxScaleDifference=.1f;
+float maxObjectHeight=200.0f;
 int targetTemperature=220;
 bool debug=false;
-bool enableAutoMonitorFolder;
 bool useSubpathColors=false;
-bool showDeviceName;
+int serverPort=8888;
+bool deviceAutoDetect=true;
+int deviceSpeed=115200;
 string deviceName;
-int serverPort;
-bool autoDetectDeviceName=false;
-bool showStatusMessage=true;
 bool connectionFailed=false;
 float globalScale=1;
+int simplifyIterations=10;
+int simplifyMinNumPoints=15;
+float simplifyMinDistance=5;
+string resourceFolder;
+string documentFolder;
+string doodlesFolder;
+string gcodeFolder;
 map<string,string> params;
-int deviceSpeed;
-int simplifyIterations,simplifyMinNumPoints;
-float simplifyMinDistance;
+string statusMessage;
 
 float scaleFunction(float f) {
-    //return minScale; //ofMap(f,0,1,minScale,maxScale);
     return vfunc[int(ofMap(f, 0, 1, vres-1, 0, true))];
 }
 
@@ -48,35 +56,69 @@ Files files;
 class ofApp : public ofBaseApp, public ofxHTTPServerListener {
 public:
 
-    //application properties
-    ofImage bg,bg_busy,vb;
+    ofImage bg,bg_busy,vb,shapes;
     Btn btnNew,btnSave,btnOops,btnLoadPrevious,btnLoadNext,btnPrint,btnStop;
-    Btn btnTwistLeft, btnTwistRight, btnZoomIn, btnZoomOut, btnHigher, btnLower;
-
+    Btn btnTwistLeft,btnTwistRight,btnZoomIn,btnZoomOut,btnHigher,btnLower;
     Canvas canvas;
     Side side;
     Thermometer thermometer;
     Printer printer;
     ofxHTTPServer *server;
     ofSerial tmp;
+    string ipaddress,networkName;
 
-    void setup() {
-        //ofSetLogLevel(OF_LOG_NOTICE);
-        
+    void setup() {        
         ofSetDataPathRoot("../Resources/");
-        
-        loadSettings("Doodle3D.ini");
+        resourceFolder = ofFile("../Resources").getAbsolutePath() + "/";
+        documentFolder = ofFilePath::getPathForDirectory("~/Documents/Doodle3D/");
+        doodlesFolder = documentFolder + "doodles/";
+        gcodeFolder = documentFolder + "gcode/";
+        ofSetDataPathRoot(documentFolder);
+        if (!ofDirectory(documentFolder).exists()) ofDirectory::createDirectory(documentFolder);
+        if (!ofDirectory(doodlesFolder).exists()) ofDirectory::createDirectory(doodlesFolder);
+        if (!ofDirectory(gcodeFolder).exists()) ofDirectory::createDirectory(gcodeFolder);
 
-//        params["loadSettings"] = "BartProtobox.ini";
-//        params["loadSettings"] = "RickUltimaker.ini";
+        ini.load(resourceFolder+"Doodle3D.ini");
+        ini.load(documentFolder+"Doodle3D.ini");
         
         if (params["loadSettings"]!="") {
             string folder = ofFilePath::getPathForDirectory("~/Documents/Doodle3D/");
-            loadSettings(folder+params["loadSettings"]);
-//            cout << "load settings: " << (folder+params["loadSettings"]) << endl;
-            //ofSystemAlertDialog(folder+params["loadSettings"]);
+            ini.load(folder+params["loadSettings"]);
         }
         
+        ofSetDataPathRoot(resourceFolder);
+        
+        deviceSpeed = ini.get("device.speed",deviceSpeed);
+        deviceAutoDetect = ini.get("device.autoDetect",true);
+        targetTemperature = ini.get("targetTemperature",targetTemperature);
+        objectHeight = ini.get("objectHeight",objectHeight);
+        maxObjectHeight = ini.get("maxObjectHeight",maxObjectHeight);
+        layerHeight = ini.get("layerHeight",layerHeight);
+        minScale = ini.get("minScale",minScale);
+        maxScale = ini.get("maxScale",maxScale);
+        side.setShape(ini.get("shape","|").at(0));
+        maxScaleDifference = ini.get("maxScaleDifference",maxScaleDifference); //problems with resolution>layers. should be half of wallThickness or so.
+        side.visible = ini.get("side.visible",side.visible);
+        side.is3D = ini.get("side.is3D",side.is3D);
+        side.bounds = ini.get("side.bounds",side.bounds);
+        side.border = ini.get("side.border",side.border);
+        side.vStep = ini.get("side.vStep",side.vStep);
+        useSubpathColors = ini.get("useSubpathColors",useSubpathColors);
+        printer.screenToMillimeterScale=ini.get("screenToMillimeterScale",printer.screenToMillimeterScale);
+        printer.speed = ini.get("speed",printer.speed);
+        printer.travelSpeed = ini.get("travelSpeed",printer.travelSpeed);
+        printer.wallThickness = ini.get("wallThickness",printer.wallThickness);
+        printer.zOffset = ini.get("zOffset",printer.zOffset);
+        printer.useSubLayers = ini.get("useSubLayers",printer.useSubLayers);
+        twists = ini.get("twists",twists);
+        printer.filamentThickness = ini.get("filamentThickness",printer.filamentThickness);
+        printer.loopAlways = ini.get("loopAlways",printer.loopAlways);
+        thermometer.showWarmUp = ini.get("showWarmUp",thermometer.showWarmUp);
+        serverPort = ini.get("server.port",serverPort);
+        deviceName = ini.get("device.name",deviceName);
+        simplifyIterations = ini.get("simplify.iterations",simplifyIterations);
+        simplifyMinNumPoints = ini.get("simplify.minNumPoints",simplifyMinNumPoints);
+        simplifyMinDistance = ini.get("simplify.minDistance",simplifyMinDistance);
         
         btnNew.setup(0xffff00);
         btnSave.setup(0x00ff00);
@@ -94,108 +136,52 @@ public:
         
         thermometer.setup();
         canvas.setup();
-
-        printer.setup();
         bg.loadImage("bg.png");
         bg_busy.loadImage("bgbusy.png");
         mask.loadImage("mask.png");
-        
-//        ofSetLogLevel(OF_LOG_NOTICE);
-
-//        cout << "PARAMS:" << endl;
-        //for (int i=0; i<params.size(); i++)
-        
+        shapes.loadImage("shapes.png");
         ofEnableAlphaBlending();
-        //ofSetWindowPosition(0,0);
-        //ofxSetWindowShape(ini.get("window",ofRectangle(0,0,1280,800));
-        
-        
-        ofRectangle window = ini.get("window",ofRectangle(0,0,1280,800));
-//        ofSystemAlertDialog(ofxToString(window));
+        ofRectangle window = ini.get("window.bounds",ofRectangle(0,0,1280,800));
         ofxSetWindowRect(window);
-
-        //
-//        if (params["fullscreen"]!="") {
-//            ofSetFullscreen(ofxToBoolean(params["fullscreen"]));
-//        } else {
-//            ofSetFullscreen(ini.get("fullscreen",true));
-//        }
-        
-        ofSetFullscreen(ini.get("fullscreen",true));
-        
+        ofSetFullscreen(ini.get("window.fullscreen",true));
+        if (window.width!=ofGetScreenWidth()) ofSetFullscreen(false);
         ofSetFrameRate(ini.get("frameRate", 30));
         ofSetEscapeQuitsApp(ini.get("quitOnEscape",true));
         ofEnableSmoothing();
-        
-//        if (params["window"]!="") {
-//        
-//        }
-//        
-//        ofxSetWindowRect(ofxToRectangle(params["window"]));
-        
-//        if (params["deviceSpeed"]!="") {
-//            deviceSpeed = ofToInt(params["deviceSpeed"]);
-//        } else {
-//        }
-        deviceSpeed = ini.get("device.speed",115200);
+        ofBackground(255);
 
-//        if (params["device"]!="") {
-//            deviceName = params["device"];
-//        } else
-        
-        if (ini.get("autoDetectDeviceName",true)) {
+        if (deviceAutoDetect) {
             deviceName = detectDeviceName();
         } else {
             deviceName = ini.get("device.name","");
         }
         
-        simplifyIterations = ini.get("simplifyIterations",10);
-        simplifyMinNumPoints = ini.get("simplifyMinNumPoints",15);
-        simplifyMinDistance = ini.get("simplifyMinDistance",10);
-        
-//        ofSystemAlertDialog(deviceName);
-//        ofSystemAlertDialog(ofToString(deviceSpeed));
-
-        
         if (deviceName!="") {
             string str = "connecting to " + deviceName + " @ " + ofToString(deviceSpeed) + "bps";
             cout << str << endl;
-            //ofSystemAlertDialog(str);
-            ultimaker.connect(deviceName,deviceSpeed);
+            if (!ultimaker.connect(deviceName,deviceSpeed)) {
+                deviceName += ": not connected";
+            }
+        } else {
+            deviceName = deviceAutoDetect ? "could not autoDetect device" : "device name is empty";
         }
         
         server = ofxHTTPServer::getServer(); // get the instance of the server
-        server->setServerRoot(".");		 // folder with files to be served
+        server->setServerRoot(".");          // folder with files to be served
         server->setUploadDir("upload");		 // folder to save uploaded files
         server->setCallbackExtension("of");	 // extension of urls that aren't files but will generate a post or get event
         server->setListener(*this);
-        
-        if (params["serverPort"]!="") serverPort = ofToInt(params["serverPort"]);
-        else serverPort = ini.get("server.port",serverPort);
-
         server->start(serverPort);
         
-        cout << "running webserver at port: " << serverPort << endl;
+        files.setup();
         
-        ofBackground(255);
+        if (ini.get("centerWindow",true)) {
+            int x = ofGetScreenWidth()/2 - window.width/2;
+            int y = ofGetScreenHeight()/2 - window.height/2;
+            ofSetWindowPosition(x,y);
+        }
         
-        //ofDirectory::createDirectory("~/Doodle3D");
-        //ofSetDataPathRoot("~/Doodle3D/");
-        //cout << ofToDataPath("mask.png") << endl;
-        //string filename = ofToDataPath("test123.txt");
-        //cout << filename << endl;
-        
-        //ofstream file(filename.c_str(),ios::out);
-        //file << "test" << endl;
-        //file.close();
-        
-        files.setup();  //verandert ook het DataPath naar ~/Documents/Doodle3D/
-        
-//        string filename = ofToDataPath("test");
-//        ofstream file(filename.c_str(),ios::out);
-//        file << "test" << endl;
-//        file.close();
-//        ofSetLogLevel(OF_LOG_WARNING);
+        refreshDebugInfo();
     }
     
     string detectDeviceName() {
@@ -211,19 +197,14 @@ public:
         return "";
     }
     
-    void getRequest(ofxHTTPServerResponse & response){
+    void getRequest(ofxHTTPServerResponse & response) {
     }
     
-    void postRequest(ofxHTTPServerResponse & response){
-        cout << "post" << endl;
-        //cout << response.requestFields["data"] << endl;
-        
+    void postRequest(ofxHTTPServerResponse & response) {
         files.cur = -1;
         canvas.clear();
         
         string data = response.requestFields["data"];
-        
-        cout << "DATA: " << data << endl;
         
         vector<string> items = ofSplitString(data,"\nBEGIN\n");
         items = ofSplitString(items[items.size()-1],"\n\nEND\n");
@@ -233,9 +214,7 @@ public:
             files.loadFromStrings(lines);
             files.save("doodle-"+ofxUrlToSafeLocalPath(ofxGetIsoDateTime())+".txt");
         }
-
     }
-
 
     void update() {
         if (connectionFailed) thermometer.visible = false;
@@ -263,23 +242,14 @@ public:
         if (btnTwistLeft.selected) twists-=.01;
         if (btnTwistRight.selected) twists+=.01;
         
-        if (btnOops.selected) { // && ofGetFrameNum()%5==0) {
+        if (btnOops.selected) {
             canvas.undo();
-        }
-        
-        if (enableAutoMonitorFolder && ofGetFrameNum()%60==0) {
-            //cout << "listDir" << endl;
-            files.listDir();
         }
     }
 
     void draw() {
         ofSetupScreenOrtho(0,0,OF_ORIENTATION_UNKNOWN,true,-200,200);
-        
-        
         ofScale(globalScale,globalScale);
-
-        
         ofSetColor(255);
         
         if (connectionFailed) bg.draw(0,0);
@@ -295,80 +265,44 @@ public:
         canvas.draw();
         if (debug) canvas.drawDebug();
         side.draw();
+        shapes.draw(side.bounds.x-15,side.bounds.y-40);
         thermometer.draw();
-        
         ofSetColor(0);
         
-        string status;
         if (ofGetFrameNum()<10*30 && !ultimaker.isStartTagFound) {
-            ofSetColor(0);
-            status = "Connecting to Ultimaker...";
+            statusMessage = "Connecting to Ultimaker...";
         } else if (ofGetFrameNum()>10*30 && ofGetFrameNum()<20*30 && !ultimaker.isStartTagFound) {
-            ofSetColor(255,0,0);
-            status = "Failed to connect. Make sure your Ultimaker runs Marlin firmware at speed 115200 bps";
+            statusMessage = "Failed to connect. Please run Marlin firmware at 115200 bps";
             connectionFailed = true;
-        } else if (debug) {
-            ofSetColor(0);
-            status = ofToString(ofGetFrameRate());
-        } else {
-            ofSetColor(0);
-            status = files.getFilename();
         }
+            	
+        if (ultimaker.isStartTagFound) statusMessage = "Connected";
         
-        if (showStatusMessage) ofDrawBitmapString(status, 20,20);
-        if (showDeviceName && !autoDetectDeviceName) ofDrawBitmapString(deviceName, 20,35);
-    }
-
-    void loadSettings(string filename) {
-        ini.load(filename);
-        
-        //ofSystemAlertDialog("loadSettings: "+filename);
-
-        targetTemperature = ini.get("targetTemperature",220);
-        objectHeight = ini.get("objectHeight",40.0f);
-        maxObjectHeight = ini.get("maxObjectHeight",200.0f);
-        layerHeight = ini.get("layerHeight",.2f);
-        minScale=ini.get("minScale",.8f);
-        maxScale=ini.get("maxScale",1.2f);        
-        side.setShape(ini.get("shape","|").at(0));
-        maxScaleDifference=ini.get("maxScaleDifference",.1f); //problematic when resolution>layers. should be half of wallThickness or so.
-        side.visible = ini.get("side.visible",true);
-        side.is3D = ini.get("side.is3D",false);
-        side.bounds = ini.get("side.bounds",ofRectangle(900,210,131,390));
-        side.border = ini.get("side.border",ofRectangle(880,170,2,470));
-        useSubpathColors = ini.get("useSubpathColors",false);
-        printer.screenToMillimeterScale=ini.get("screenToMillimeterScale",.3f);
-        printer.feedrate = ini.get("speed",35)*60;
-        printer.travelrate = ini.get("travelrate",250)*60;
-        printer.wallThickness = ini.get("wallThickness",.8f);
-        printer.zOffset = ini.get("zOffset",0.0f);
-        printer.useSubLayers = ini.get("useSubLayers",true);
-        twists = ini.get("twists",0.0f);
-        printer.filamentThickness = ini.get("filamentThickness",2.89f);
-        printer.minimalDistanceForRetraction = ini.get("minimalDistanceForRetraction",5);
-        printer.retraction = ini.get("retraction",2);
-        printer.retractionSpeed = ini.get("retractionSpeed",100)*60;
-        printer.loopAlways = ini.get("loopAlways",false);
-        thermometer.showWarmUp = ini.get("showWarmUp",false);
-        enableAutoMonitorFolder = ini.get("enableAutoMonitorFolder",true);
-        showDeviceName = ini.get("showDeviceName",false);
-        serverPort = ini.get("server.port",8888);
-        deviceName = ini.get("device.name","device.name undefined");
-        showStatusMessage = ini.get("showStatusMessage",true);
+        if (debug) {
+            ofSetupScreen();
+            float x=220*globalScale,y=180*globalScale;
+            ofDrawBitmapString("status: " + statusMessage,x,y+=15);
+            ofDrawBitmapString("deviceName: " + deviceName,x,y+=15);
+            ofDrawBitmapString("deviceSpeed: " + ofToString(deviceSpeed),x,y+=15);
+            ofDrawBitmapString("fps: " + ofToString(ofGetFrameRate(),0),x,y+=15);
+            ofDrawBitmapString("file: " + files.getFilename(),x,y+=15);
+            ofDrawBitmapString("numVertices (3d view): " + ofToString(side.numVertices),x,y+=15);
+            ofDrawBitmapString("WiFi network: " + networkName,x,y+=15);
+            ofDrawBitmapString("ip-address: " + ipaddress,x,y+=15);
+            ofDrawBitmapString("port: " + ofToString(serverPort),x,y+=15);
+        }
     }
 
     void stop() {
         ultimaker.stopPrint();
-        //ultimaker.request("G28 X0 Y0"); //home x,y
-        ultimaker.load("gcode/end.gcode");
+        ultimaker.load(resourceFolder+"end.gcode");
         ultimaker.startPrint();
-        //M84
     }
     
-    void print() {
+    void print(bool exportOnly=false) {
         ofxSimplifyPath(path,simplifyIterations,simplifyMinNumPoints,simplifyMinDistance);
-        side.is3D=false;
-        printer.print();
+        if (ofGetFrameRate()<20) side.is3D=false;
+        printer.print(resourceFolder+"start.gcode",resourceFolder+"end.gcode");
     }
 
     void mousePressed(int x, int y, int button) {
@@ -390,7 +324,6 @@ public:
         if (btnLower.hitTest(x,y)) btnLower.selected=true;
         if (btnTwistLeft.hitTest(x,y)) btnTwistLeft.selected=true;
         if (btnTwistRight.hitTest(x,y)) btnTwistRight.selected=true;
-        //cout << ofToHex(mask.getColor(x,y).getHex()) << endl;
     }
 
     void mouseDragged(int x, int y, int button) {
@@ -406,6 +339,7 @@ public:
         y /= globalScale;
         
         ofxSimplifyPath(path,simplifyIterations,simplifyMinNumPoints,simplifyMinDistance);
+        
         side.mouseReleased(x, y, button);
         canvas.mouseReleased(x, y, button);
         btnOops.selected=false;
@@ -417,17 +351,9 @@ public:
         btnTwistRight.selected=false;
     }
 
-    void chmod() {
-        string folder = ini.get("copyGCodeToPath","");
-        if (folder=="") return;
-        string cmd = "chmod -R 777 " + folder;
-        system(cmd.c_str());
-    }
-
     void showHelp() {
-        ofSystemAlertDialog("On your phone or tablet connect to the '" + getWirelessNetwork() + "' network.\nIn the webbrowser open: http://" + getIP() + ":8888");
+        ofSystemAlertDialog("On your tablet connect to the '" + getWirelessNetwork() + "' network.\nIn the webbrowser open: http://" + getIP() + ":" + ofToString(serverPort));
     }
-    
     
     string ofxExecute(string cmd) {
         string result;
@@ -445,7 +371,12 @@ public:
     string getWirelessNetwork() {
         return ofxExecute("networksetup -getairportnetwork en1 | cut -c 24-");
     }
-
+    
+    void refreshDebugInfo() {
+        ipaddress = getIP();
+        networkName = getWirelessNetwork();
+    }
+    
     void keyPressed(int key) {
         switch (key) {
             case '/': case '\\': case '$': case '#': case '|': case '%': case '@': case '^': case '&': case '_': side.setShape(key); break;
@@ -458,8 +389,8 @@ public:
             case 'b': useSubpathColors=!useSubpathColors; break;
             case 'C': canvas.createCircle(); break;
             case 'c': case 'n': canvas.clear(); files.unloadFile(); break;
-            case 'd': debug=!debug; showStatusMessage=debug; break;
-            case 'e': printer.print(true); chmod(); break; //ultimaker.extrude(260,1000); break;
+            case 'd': debug=!debug; refreshDebugInfo(); break;
+            case 'e': print(true); break;
             case 'f': ofToggleFullscreen(); break;
             case 'h': objectHeight+=5; if (objectHeight>maxObjectHeight) objectHeight=maxObjectHeight; break;
             case 'H': objectHeight-=5; if (objectHeight<3) objectHeight=3; break;
@@ -475,16 +406,15 @@ public:
             case 'u': case 'z': canvas.undo(); break;
             case '~': files.deleteCurrentFile(); break;
             case ' ': files.listDir(); break;
+            case 'x': files.saveSvg(resourceFolder+"template.svg",documentFolder+"output.svg"); break;
         }
     }
     
     void windowResized(int w, int h) {
-        globalScale = w/1280.0;
+        globalScale = MIN(w/1280.0,h/800.0);
     }
 
 };
-
-//ofxEndApp();
 
 int main(int argc, const char** argv){
     for (int i=0; i<argc; i++) {
