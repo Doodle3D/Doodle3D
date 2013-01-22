@@ -4,7 +4,9 @@
 #include "ofxIniSettings.h"
 #include "ofxUltimaker.h"
 #include "ofxGCode.h"
+#ifdef TARGET_OSX
 #include "ofxHTTPServer.h"
+#endif
 
 static const string VERSION = "osx-0011";
 
@@ -40,6 +42,7 @@ string resourceFolder;
 string documentFolder;
 string doodlesFolder;
 string gcodeFolder;
+string imagesFolder;
 map<string,string> params;
 string statusMessage;
 ofRectangle shapeButtons(888,118,147,45);
@@ -64,7 +67,12 @@ Files files;
 #include "Thermometer.h"
 #include "Printer.h"
 
+#ifdef TARGET_OSX
 class ofApp : public ofBaseApp, public ofxHTTPServerListener {
+#else
+class ofApp : public ofBaseApp {
+#endif
+
 public:
 
     ofxUltimaker ultimaker;
@@ -75,33 +83,56 @@ public:
     Side side;
     Thermometer thermometer;
     Printer printer;
+    #ifdef TARGET_OSX
     ofxHTTPServer *server;
+    #endif
     ofSerial tmp;
     string ipaddress,networkName;
     ofTrueTypeFont font;
 
-    void setup() {        
+
+
+    void setup() {
+
+
+        #ifdef TARGET_OSX
         ofSetDataPathRoot("../Resources/");
         resourceFolder = ofFile("../Resources").getAbsolutePath() + "/";
-        documentFolder = ofFilePath::getPathForDirectory("~/Documents/Doodle3D/");
+        #else
+        resourceFolder = ""; //ofFilePath::getCurrentWorkingDirectory()+"data\\";
+        #endif
+
+        documentFolder = ofFilePath::getPathForDirectory((string)getenv("HOME")+"/Documents/Doodle3D/"); //or ofFilePath::getUserHomeDir()
+
+        cout << "resourceFolder: " << resourceFolder << endl;
+        cout << "documentFolder: " << documentFolder << endl;
+
         doodlesFolder = documentFolder + "doodles/";
         gcodeFolder = documentFolder + "gcode/";
-        ofSetDataPathRoot(documentFolder);
+        //ofSetDataPathRoot(documentFolder);
         if (!ofDirectory(documentFolder).exists()) ofDirectory::createDirectory(documentFolder);
         if (!ofDirectory(doodlesFolder).exists()) ofDirectory::createDirectory(doodlesFolder);
         if (!ofDirectory(gcodeFolder).exists()) ofDirectory::createDirectory(gcodeFolder);
 
         ini.load(resourceFolder+"Doodle3D.ini");
         ini.load(documentFolder+"Doodle3D.ini");
-        
+
         if (params["loadSettings"]!="") {
-            string folder = ofFilePath::getPathForDirectory("~/Documents/Doodle3D/");
-            cout << "loadSettings: " << (folder+params["loadSettings"]) << endl;
-            ini.load(folder+params["loadSettings"]);
+            //string folder = ofFilePath::getPathForDirectory("~/Documents/Doodle3D/");
+            cout << "loadSettings: " << (documentFolder+params["loadSettings"]) << endl;
+            ini.load(documentFolder+params["loadSettings"]);
         }
-        
-        ofSetDataPathRoot(resourceFolder);
-        
+
+        //ofSetDataPathRoot(resourceFolder);
+
+        #ifdef TARGET_OSX
+        imagesFolder = resourceFolder;
+        #else
+        imagesFolder = resourceFolder+"images/";
+        #endif
+
+        //cout << "ofSetDataPathRoot to " << resourceFolder << endl;
+
         fps = ini.get("frameRate",fps);
         deviceSpeed = ini.get("device.speed",deviceSpeed);
         deviceAutoDetect = ini.get("device.autoDetect",true);
@@ -137,8 +168,8 @@ public:
         simplifyMinNumPoints = ini.get("simplify.minNumPoints",simplifyMinNumPoints);
         simplifyMinDistance = ini.get("simplify.minDistance",simplifyMinDistance);
         checkTemperatureInterval = ini.get("checkTemperatureInterval",checkTemperatureInterval);
-        
-        
+
+
         btnNew.setup(0xffff00);
         btnSave.setup(0x00ff00);
         btnOops.setup(0x006464);
@@ -152,54 +183,59 @@ public:
         btnLower.setup(0x8c0000);
         btnTwistLeft.setup(0xa00000);
         btnTwistRight.setup(0xb40000);
-        
+
         thermometer.setup();
         canvas.setup();
-        bg.loadImage("bg.png");
-        bg_busy.loadImage("bgbusy.png");
-        mask.loadImage("mask.png");
-        shapes.loadImage("shapes.png");
+        bg.loadImage(imagesFolder+"bg.png");
+        bg_busy.loadImage(imagesFolder+"bgbusy.png");
+        mask.loadImage(imagesFolder+"mask.png");
+        shapes.loadImage(imagesFolder+"shapes.png");
         ofEnableAlphaBlending();
         ofRectangle window = ini.get("window.bounds",ofRectangle(0,0,1280,800));
         ofxSetWindowRect(window);
         ofSetLogLevel((ofLogLevel)ini.get("loglevel",2));
         ofSetFullscreen(ini.get("window.fullscreen",true));
         font.loadFont("Abel-Regular.ttf", 14, true, false, true);
-       
+
         ofSetFrameRate(fps);
         ofSetEscapeQuitsApp(ini.get("quitOnEscape",true));
         ofEnableSmoothing();
         ofBackground(255);
-        
+
+        #ifdef TARGET_OSX
         server = ofxHTTPServer::getServer(); // get the instance of the server
         server->setServerRoot(".");          // folder with files to be served
         server->setUploadDir("upload");		 // folder to save uploaded files
         server->setCallbackExtension("of");	 // extension of urls that aren't files but will generate a post or get event
         server->setListener(*this);
         server->start(serverPort);
-        
+        #endif
+
         files.setup();
-        
+
         if (ini.get("window.center",true)) {
             int x = ofGetScreenWidth()/2 - window.width/2;
             int y = ofGetScreenHeight()/2 - window.height/2;
             ofSetWindowPosition(x,y);
         }
-        
+
         refreshDebugInfo();
-        
-        ultimaker.setup();
+
+        cout << "deviceName: " << deviceName << endl;
+
+        ultimaker.setup(deviceName);
     }
-    
+
+    #ifdef TARGET_OSX
     void getRequest(ofxHTTPServerResponse & response) {
     }
-    
+
     void postRequest(ofxHTTPServerResponse & response) {
         files.cur = -1;
         canvas.clear();
-        
+
         string data = response.requestFields["data"];
-        
+
         vector<string> items = ofSplitString(data,"\nBEGIN\n");
         items = ofSplitString(items[items.size()-1],"\n\nEND\n");
 
@@ -209,10 +245,11 @@ public:
             files.save("doodle-"+ofxUrlToSafeLocalPath(ofxGetIsoDateTime())+".txt");
         }
     }
+    #endif
 
     void update() {
         thermometer.temperature = ultimaker.temperature;
-        
+
         //send autoWarmUp command
         if (!autoWarmUpRequested && autoWarmUp && ultimaker.isStartTagFound && autoWarmUpDelay--<0) {
             ultimaker.sendCommand(autoWarmUpCommand);
@@ -223,9 +260,9 @@ public:
         if (ultimaker.isStartTagFound && checkTemperatureInterval!=0 && ofGetFrameNum() % (checkTemperatureInterval*fps)==0) {
             ultimaker.sendCommand("M105",1);
         }
-        
+
         canvas.update();
-        
+
         if (btnZoomIn.selected) canvas.zoom(1);
         if (btnZoomOut.selected) canvas.zoom(-1);
 
@@ -234,7 +271,7 @@ public:
 
         if (btnTwistLeft.selected) twists-=.01;
         if (btnTwistRight.selected) twists+=.01;
-        
+
         if (btnOops.selected) {
             canvas.undo();
         }
@@ -244,16 +281,16 @@ public:
         ofSetupScreenOrtho(0,0,OF_ORIENTATION_UNKNOWN,true,-200,200);
         ofScale(globalScale,globalScale);
         ofSetColor(255);
-        
+
         bg.draw(0,0);
-        
+
         canvas.draw();
         if (debug) canvas.drawDebug();
         side.draw();
         shapes.draw(shapeButtons.x,shapeButtons.y);
         if (ultimaker.isStartTagFound) thermometer.draw();
         ofSetColor(0);
-        
+
         if (debug) drawConsole();
     }
 
@@ -275,27 +312,27 @@ public:
         }
         #undef console
     }
-    
+
     void stop() {
         ultimaker.sendCommandsFromFile(resourceFolder+"end.gcode",true);
     }
-    
+
     void print(bool exportOnly=false) {
         ofxSimplifyPath(path,simplifyIterations,simplifyMinNumPoints,simplifyMinDistance);
-        
+
         string hourMinutes = ofxFormatDateTime(ofxGetDateTime(),"%H.%M");
         string outputFilename = gcodeFolder+files.getFilename()+"_"+hourMinutes+".gcode";
         printer.print(outputFilename, resourceFolder+"start.gcode",resourceFolder+"end.gcode");
-        
+
         if (exportOnly) return;
-        
+
         ultimaker.sendCommandsFromFile(outputFilename);
     }
 
     void mousePressed(int x, int y, int button) {
         x /= globalScale;
         y /= globalScale;
-        
+
         canvas.mousePressed(x, y, button);
         side.mousePressed(x, y, button);
         if (btnNew.hitTest(x,y)) { files.cur=-1; canvas.clear(); files.unloadFile(); }
@@ -321,29 +358,29 @@ public:
     void mouseDragged(int x, int y, int button) {
         x /= globalScale;
         y /= globalScale;
-        
+
         canvas.mouseDragged(x, y, button);
         side.mouseDragged(x, y, button);
     }
-    
-    
+
+
     void mouseMoved(int x, int y) {
         x /= globalScale;
         y /= globalScale;
-        
+
         if (shapeButtons.inside(x,y)) {
             previewShape = shapeString.at(ofNormalize(x,shapeButtons.x,shapeButtons.x+shapeButtons.width) * shapeString.size());
         } else {
             previewShape = 0;
         }
     }
-    
+
     void mouseReleased(int x, int y, int button) {
         x /= globalScale;
         y /= globalScale;
-        
+
         ofxSimplifyPath(path,simplifyIterations,simplifyMinNumPoints,simplifyMinDistance);
-        
+
         side.mouseReleased(x, y, button);
         canvas.mouseReleased(x, y, button);
         btnOops.selected=false;
@@ -353,14 +390,12 @@ public:
         btnLower.selected=false;
         btnTwistLeft.selected=false;
         btnTwistRight.selected=false;
-        
-        
     }
 
     void showHelp() {
         ofSystemAlertDialog("On your tablet connect to the '" + getWirelessNetwork() + "' network.\nIn the webbrowser open: http://" + getIP() + ":" + ofToString(serverPort));
     }
-    
+
     string ofxExecute(string cmd) {
         string result;
         char line[130];
@@ -369,24 +404,32 @@ public:
         pclose(fp);
         return ofxTrimString(result);
     }
-    
+
     string getIP() {
+        #ifdef TARGET_OSX
         string ip = ofxExecute("ifconfig en1 | grep 'inet ' | cut -d ' ' -f2");
         if (ip=="") return "[unknown]";
         else return ip;
+        #else
+        return "[unknown]";
+        #endif
     }
 
     string getWirelessNetwork() {
+        #ifdef TARGET_OSX
         string network = ofxExecute("networksetup -getairportnetwork en1"); // | cut -c 24-");
         if (network=="You are not associated with an AirPort network.") return "[unknown]";
         else return network.substr(24);
+        #else
+        return "[unknown]";
+        #endif
     }
-    
+
     void refreshDebugInfo() {
         ipaddress = getIP();
         networkName = getWirelessNetwork();
     }
-    
+
     void keyPressed(int key) {
         switch (key) {
             case '/': case '\\': case '$': case '#': case '|': case '%': case '@': case '^': case '&': case '_': side.setShape(key); break;
@@ -423,7 +466,7 @@ public:
             case 27: if (ultimaker.isThreadRunning()) ultimaker.stopThread(); break;
         }
     }
-    
+
     void windowResized(int w, int h) {
         globalScale = MIN(w/1280.0,h/800.0);
     }
@@ -439,10 +482,9 @@ int main(int argc, const char** argv){
         }
 
     }
-    
+
     ofAppGlutWindow window;
-    window.setGlutDisplayString("rgba double samples>=4");
+    //window.setGlutDisplayString("rgba double samples>=4");
     ofSetupOpenGL(&window, 1280, 800, OF_WINDOW);
     ofRunApp(new ofApp());
 }
-  

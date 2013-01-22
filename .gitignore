@@ -8,4 +8,5 @@ bin/*.app/
 release/
 *.zip
 releases/
-
+*.exe
+*.dll

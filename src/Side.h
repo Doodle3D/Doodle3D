@@ -4,7 +4,7 @@
 
 class Side {
 public:
-    
+
     ofRectangle bounds;
     ofRectangle border;
     bool visible;
@@ -12,7 +12,7 @@ public:
     bool isDrawing;
     float vStep;
     int numVertices;
-    
+
     Side() {
         visible=true;
         is3D=true;
@@ -21,53 +21,53 @@ public:
         border = ofRectangle(880,170,2,470);
         vStep = 1;
     }
-    
+
     void draw() {
         if (!visible) return;
-        
+
         //resolution of rendering of vertical shape
         if (numVertices>10000) vStep = ofMap(numVertices,10000,100000,1,5,true);
         else vStep=1;
 //        else if (ofGetFrameRate()<20) vStep = 10;
 //        else vStep = 1;
-        
+
         ofPushStyle();
         ofPushMatrix();
-        
+
         ofSetColor(0);
         ofRect(border);
-        
+
         ofTranslate(bounds.x,bounds.y);
         ofTranslate(bounds.width/2,bounds.height);
 
         ofPath vpath = path;
         vector<ofPoint*> points = ofxGetPointsFromPath(vpath);
-        
+
         numVertices = points.size() * objectHeight;
-        
+
         ofRectangle pathBounds = ofxGetBoundingBox(points);
         ofPoint center = pathBounds.getCenter();
         vpath.translate(-center);
         float s = min(bounds.width/pathBounds.height,bounds.width/pathBounds.width);
         vpath.scale(s,s);
-        
+
         if (points.size()>1) {
             if (is3D) {
                 ofPushMatrix();
-                
+
                 //draw path
                 for (float i=0,n=bounds.height; i<n; i+=vStep) {
                     float ii=float(i)/n;
                     ofPushMatrix();
                     ofTranslate(0,-i);
                     float s = (previewShape==0) ? scaleFunction(ii) : getScaler(previewShape,1-ii);
-                    
+
                     ofPath spath = vpath;
                     spath.scale(s,s);
                     spath.rotate(ii*twists*360, ofVec3f(0,0,1));
                     ofRotateX(60);
                     //spath.draw(0,0);
-                    
+
 //                    vector<ofSubPath> &subpaths = spath.getSubPaths();
 //                    for (int i=0; i<subpaths.size(); i++) {
 //                        vector<ofSubPath::Command> &commands = subpaths[int(i)].getCommands();
@@ -84,7 +84,7 @@ public:
 //                        }
 //                        ofEndShape();
 //                    }
-                    
+
                     ofNoFill();
                     ofSetColor(255,0,0,60);
                     ofSetLineWidth(1*globalScale*vStep);
@@ -95,7 +95,7 @@ public:
                     }
                     ofEndShape();
 
-                    
+
 //
 //                    //draw lines between subpaths
 //                    //vector<ofSubPath> &subpaths = spath.getSubPaths();
@@ -110,18 +110,18 @@ public:
 //                    }
 
                     ofPopMatrix();
-                    
+
                     if (ii>objectHeight/maxObjectHeight) break;
                 }
                 ofPopMatrix(); //translate z=-...
-                
+
             } else {
                 //
             }
-            
+
             ofSetLineWidth(2*globalScale);
             ofSetColor(0);
-            
+
             glBegin(GL_LINE_STRIP);
             for (int i=0; i<vres; i++) {
                 float f=float(i)/vres;
@@ -131,7 +131,7 @@ public:
                 glVertex2f(x,-y);
             }
             glEnd();
-            
+
             glBegin(GL_LINE_STRIP);
             for (int i=0; i<vres; i++) {
                 float f=float(i)/vres;
@@ -142,22 +142,22 @@ public:
             }
             glEnd();
         }
-        
+
         ofPopMatrix();
         ofPopStyle();
     }
-    
+
     void toggle() {
         visible = !visible;
     }
-    
+
     void setShape(char c) {
         for (int i=0; i<vres; i++) {
             float ii=float(i)/vres;
             vfunc[i]=getScaler(c,ii);
         }
     }
-    
+
     float getScaler(char c, float ii) {
         switch (c) {
             case '|': return maxScale;
@@ -173,40 +173,40 @@ public:
             default: return maxScale;
         }
     }
-    
+
     void mousePressed(int x, int y, int button) {
         isDrawing = bounds.inside(x,y);
     }
-    
+
     void mouseDragged(int x, int y, int button) { //mouse values are always scaled to 0..1280 x 0..800 range
         if (!visible) return;
         if (!isDrawing) return;
-        
+
         float mx = ofClamp(ofGetMouseX()/globalScale - bounds.x, 0, bounds.width);
         float my = ofClamp(ofGetMouseY()/globalScale - bounds.y, 0, bounds.height);
         float pmy = ofClamp(ofGetPreviousMouseY()/globalScale - bounds.y, 0, bounds.height);
         int yy = int(ofMap(my,0,bounds.height, 0, vres-1, true));
         int pyy = int(ofMap(pmy,0,bounds.height, 0, vres-1, true));
         float xx = fabs(ofMap(ofGetMouseX()/globalScale, bounds.x, bounds.x+bounds.width, -1, 1, true));
-        
+
         xx = ofMap(xx,-1,1,minScale,maxScale,true); //0...1 of -1...1 ??? er stond 0..1
-        
+
         int minY = min(yy,pyy);
         int maxY = max(yy,pyy);
-        
-        if (fabs(minY-maxY) < FLT_EPSILON) maxY++; //prevent div 0
 
-        
+        if (fabs(minY-maxY) < 0.00001) maxY++; //prevent div 0
+
+
         vfunc[yy] = xx;
-        
+
         for (int i=minY; i<=maxY; i++) {
             if (maxY<vres) {
                 vfunc[i] = ofMap(i,minY,maxY,vfunc[minY],vfunc[maxY],true);
-                vfunc[i] = ofClamp(vfunc[i],minScale,maxScale);   
+                vfunc[i] = ofClamp(vfunc[i],minScale,maxScale);
             }
         }
     }
-        
+
     void mouseReleased(int x, int y, int button) {
         //smooth vertical func
         isDrawing=false;

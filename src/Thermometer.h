@@ -4,7 +4,7 @@
 
 class Thermometer {
 public:
-    
+
     ofPoint position;
     ofImage bg,mask,good,bad,warmup;
 //    bool showWarmUp;
@@ -17,13 +17,13 @@ public:
         visible = true;
 //        showWarmUp = false;
     }
-    
+
     void setup() {
         position.set(1105,506);
-        bg.loadImage("thermobg.png");
-        mask.loadImage("thermomask.png");
-        good.loadImage("krul.png");
-        bad.loadImage("kruis.png");
+        bg.loadImage(imagesFolder+"thermobg.png");
+        mask.loadImage(imagesFolder+"thermomask.png");
+        good.loadImage(imagesFolder+"krul.png");
+        bad.loadImage(imagesFolder+"kruis.png");
         //warmup.loadImage("images/opwarmen.png");
     }
 
@@ -42,12 +42,12 @@ public:
         mask.draw(0,0);
 //        if (temperature < targetTemperature) bad.draw(90,0); // && ultimaker.isBusy && !ultimaker.isPrinting) bad.draw(90,0);
 //        else good.draw(90,0);
-        
+
         //if (showWarmUp && ultimaker.isBusy && !ultimaker.isPrinting && temperature < targetTemperature) warmup.draw(-180,-60);
         //ofSetColor(0);
         //if (debug) ofDrawBitmapString(ofToString(ultimaker.temperature),50,230);
         ofPopMatrix();
         ofPopStyle();
     }
-    
+
 };

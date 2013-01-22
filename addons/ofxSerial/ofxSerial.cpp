@@ -30,7 +30,7 @@
 //------------------------------------
    // needed for serial bus enumeration:
    //4d36e978-e325-11ce-bfc1-08002be10318}
-   DEFINE_GUID (GUID_SERENUM_BUS_ENUMERATOR, 0x4D36E978, 0xE325,
+   DEFINE_GUID (GUID_SERENUM_BUS_ENUMERATOR2, 0x4D36E978, 0xE325,
    0x11CE, 0xBF, 0xC1, 0x08, 0x00, 0x2B, 0xE1, 0x03, 0x18);
 //------------------------------------
 
@@ -49,7 +49,7 @@ void ofxSerial::enumerateWin32Ports(){
 	// Reset Port List
 	nPorts = 0;
 	// Search device set
-	hDevInfo = SetupDiGetClassDevs((struct _GUID *)&GUID_SERENUM_BUS_ENUMERATOR,0,0,DIGCF_PRESENT);
+	hDevInfo = SetupDiGetClassDevs((struct _GUID *)&GUID_SERENUM_BUS_ENUMERATOR2,0,0,DIGCF_PRESENT);
 	if ( hDevInfo ){
       while (TRUE){
          ZeroMemory(&DeviceInterfaceData, sizeof(DeviceInterfaceData));
@@ -162,10 +162,10 @@ static bool isDeviceArduino( ofSerialDeviceInfo & A ){
 
 //----------------------------------------------------------------
 void ofxSerial::buildDeviceList(){
-	
+
 	deviceType = "serial";
 	devices.clear();
-	
+
 	vector <string> prefixMatch;
 
 	#ifdef TARGET_OSX
@@ -176,26 +176,26 @@ void ofxSerial::buildDeviceList(){
 		prefixMatch.push_back("ttyS");
 		prefixMatch.push_back("ttyUSB");
 		prefixMatch.push_back("rfc");
-	#endif	
-	
-	
+	#endif
+
+
 	#if defined( TARGET_OSX ) || defined( TARGET_LINUX )
 
 	DIR *dir;
 	struct dirent *entry;
 	dir = opendir("/dev");
-	
+
 	string deviceName	= "";
 	int deviceCount		= 0;
-	
+
 	if (dir == NULL){
 		ofLog(OF_LOG_ERROR,"ofxSerial: error listing devices in /dev");
-	} else {		
+	} else {
 		//for each device
 		while((entry = readdir(dir)) != NULL){
 			deviceName = (char *)entry->d_name;
-			
-			//we go through the prefixes 
+
+			//we go through the prefixes
 			for(int k = 0; k < (int)prefixMatch.size(); k++){
 				//if the device name is longer than the prefix
 				if( deviceName.size() > prefixMatch[k].size() ){
@@ -208,10 +208,10 @@ void ofxSerial::buildDeviceList(){
 				}
 			}
 		}
-		closedir(dir);		
+		closedir(dir);
 	}
-	
-	#endif	
+
+	#endif
 
 	//---------------------------------------------
 	#ifdef TARGET_WIN32
@@ -227,13 +227,13 @@ void ofxSerial::buildDeviceList(){
     //---------------------------------------------
 
 //DISABLED because deviceID is protected
-//	//here we sort the device to have the aruino ones first. 
+//	//here we sort the device to have the aruino ones first.
 //	partition(devices.begin(), devices.end(), isDeviceArduino);
 //	//we are reordering the device ids. too!
 //	for(int k = 0; k < (int)devices.size(); k++){
 //		devices[k].deviceID = k;
 //	}
-	
+
 	bHaveEnumeratedDevices = true;
 }
 
@@ -253,7 +253,7 @@ vector <ofSerialDeviceInfo> ofxSerial::getDeviceList(){
 }
 
 //----------------------------------------------------------------
-void ofxSerial::enumerateDevices(){	
+void ofxSerial::enumerateDevices(){
 	listDevices();
 }
 
@@ -309,7 +309,7 @@ bool ofxSerial::setup(string portName, int baud){
 	//---------------------------------------------
 	#if defined( TARGET_OSX ) || defined( TARGET_LINUX )
 	//---------------------------------------------
-		
+
 		//lets account for the name being passed in instead of the device path
 		if( portName.size() > 5 && portName.substr(0, 5) != "/dev/" ){
 			portName = "/dev/" + portName;
@@ -433,7 +433,7 @@ bool ofxSerial::setup(string portName, int baud){
 							 cfsetospeed(&options,B4000000);
 							 break;
 		   #endif
-			default:	
+			default:
 						#ifdef TARGET_LINUX
 							//Set the speed now to 38400, and after configuring the port set the custom baudrate
 							cfsetispeed(&options,B38400);
