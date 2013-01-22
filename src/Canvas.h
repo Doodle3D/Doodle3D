@@ -58,8 +58,13 @@ public:
     }
     
     void zoom(int dir) {
-        ofPoint center = ofxGetCenterOfMass(ofxGetPointsFromPath(path));
-        path.translate(-center); 
+        vector<ofPoint*> points = ofxGetPointsFromPath(path);
+        ofRectangle pathBounds = ofxGetBoundingBox(points);
+        if (dir>0 && (pathBounds.width>this->bounds.width || pathBounds.height>this->bounds.height)) return;
+        if (dir<0 && (pathBounds.width<50 || pathBounds.height<50)) return;
+        
+        ofPoint center = ofxGetCenterOfMass(points);
+        path.translate(-center);
         if (dir>0) path.scale(1/.97,1/.97); 
         else path.scale(.97,.97);
         path.translate(center);

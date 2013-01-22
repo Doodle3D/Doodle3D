@@ -7,14 +7,15 @@ public:
     
     ofPoint position;
     ofImage bg,mask,good,bad,warmup;
-    bool showWarmUp;
+//    bool showWarmUp;
     bool visible;
+    float temperature;
 
     Thermometer() {
         targetTemperature = 220;
-        showWarmUp = false;
+//        showWarmUp = false;
         visible = true;
-        showWarmUp = false;
+//        showWarmUp = false;
     }
     
     void setup() {
@@ -28,7 +29,7 @@ public:
 
     void draw() {
         if (!visible) return;
-        int temperature = ultimaker.temperature;
+        //int temperature = 0; //ultimaker.temperature; FIXME
         float level = ofMap(temperature, 0, targetTemperature, 40, mask.height-40, true);
         ofPushStyle();
         ofPushMatrix();
@@ -39,11 +40,12 @@ public:
         ofRect(1,mask.height-level,mask.width-1,level);
         ofSetColor(255);
         mask.draw(0,0);
-        if (temperature < targetTemperature) bad.draw(90,0); // && ultimaker.isBusy && !ultimaker.isPrinting) bad.draw(90,0);
-        else good.draw(90,0);
+//        if (temperature < targetTemperature) bad.draw(90,0); // && ultimaker.isBusy && !ultimaker.isPrinting) bad.draw(90,0);
+//        else good.draw(90,0);
+        
         //if (showWarmUp && ultimaker.isBusy && !ultimaker.isPrinting && temperature < targetTemperature) warmup.draw(-180,-60);
-        ofSetColor(0);
-        if (debug) ofDrawBitmapString(ofToString(ultimaker.temperature),50,230);
+        //ofSetColor(0);
+        //if (debug) ofDrawBitmapString(ofToString(ultimaker.temperature),50,230);
         ofPopMatrix();
         ofPopStyle();
     }

@@ -7,8 +7,10 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		1D1278ED16ACA43400D43BC7 /* ofxSerial.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 1D1278EB16ACA43400D43BC7 /* ofxSerial.cpp */; };
 		1D1C99AA16623FDD008B975B /* start.gcode in Resources */ = {isa = PBXBuildFile; fileRef = 1D1C99A916623FDD008B975B /* start.gcode */; };
 		1D1C99AC16623FE1008B975B /* end.gcode in Resources */ = {isa = PBXBuildFile; fileRef = 1D1C99AB16623FE1008B975B /* end.gcode */; };
+		1D4D108E16AD6DBB00CCBCF1 /* Abel-Regular.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 1D4D108D16AD6DBB00CCBCF1 /* Abel-Regular.ttf */; };
 		1D77DEAC16A7123100B43A9A /* settings.html in Resources */ = {isa = PBXBuildFile; fileRef = 1D77DEAB16A7123100B43A9A /* settings.html */; };
 		1D77DEAE16A71E3E00B43A9A /* thermobg.png in Resources */ = {isa = PBXBuildFile; fileRef = 1D77DEAD16A71E3E00B43A9A /* thermobg.png */; };
 		1D77DEB016A86EAD00B43A9A /* shapes.png in Resources */ = {isa = PBXBuildFile; fileRef = 1D77DEAF16A86EAD00B43A9A /* shapes.png */; };
@@ -24,7 +26,6 @@
 		1D83E086158A505D005F0922 /* ofxIniSettings.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 1D83E07B158A505D005F0922 /* ofxIniSettings.cpp */; };
 		1D83E087158A505D005F0922 /* ofxGCode.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 1D83E07F158A505D005F0922 /* ofxGCode.cpp */; };
 		1D83E088158A505D005F0922 /* ofxExtras.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 1D83E083158A505D005F0922 /* ofxExtras.cpp */; };
-		1D83E08B158A530E005F0922 /* ofxUltimaker.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 1D83E08A158A530E005F0922 /* ofxUltimaker.cpp */; };
 		1D9EB08D16A309D2002106A7 /* favicon.ico in Resources */ = {isa = PBXBuildFile; fileRef = 1D9EB08416A3099A002106A7 /* favicon.ico */; };
 		1D9EB08E16A309D3002106A7 /* 404.html in Resources */ = {isa = PBXBuildFile; fileRef = 1D9EB08516A3099A002106A7 /* 404.html */; };
 		1D9EB08F16A309D6002106A7 /* script.js in Resources */ = {isa = PBXBuildFile; fileRef = 1D9EB08616A3099A002106A7 /* script.js */; };
@@ -37,7 +38,6 @@
 		1DB6E92216A6A2F000B76455 /* template.svg in Resources */ = {isa = PBXBuildFile; fileRef = 1DB6E92116A6A2F000B76455 /* template.svg */; };
 		1DC9E35116425B5100A90E2A /* ofxHTTPServer.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 1DC9E34816425B5100A90E2A /* ofxHTTPServer.cpp */; };
 		1DC9E3571642658A00A90E2A /* libmicrohttpd.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 1DC9E3561642658A00A90E2A /* libmicrohttpd.a */; };
-		1DF7B5EB165E20480064F71E /* ofxArgParser.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 1DF7B5DE165E20480064F71E /* ofxArgParser.cpp */; };
 		BBAB23CB13894F3D00AA2426 /* GLUT.framework in CopyFiles */ = {isa = PBXBuildFile; fileRef = BBAB23BE13894E4700AA2426 /* GLUT.framework */; };
 		E45BE97B0E8CC7DD009D7055 /* AGL.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = E45BE9710E8CC7DD009D7055 /* AGL.framework */; };
 		E45BE97C0E8CC7DD009D7055 /* ApplicationServices.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = E45BE9720E8CC7DD009D7055 /* ApplicationServices.framework */; };
@@ -92,9 +92,12 @@
 		1D0909851593097C000DE10D /* Side.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Side.h; sourceTree = "<group>"; };
 		1D09098615931547000DE10D /* Files.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Files.h; sourceTree = "<group>"; };
 		1D09098815931954000DE10D /* Printer.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Printer.h; sourceTree = "<group>"; };
+		1D1278EB16ACA43400D43BC7 /* ofxSerial.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ofxSerial.cpp; sourceTree = "<group>"; };
+		1D1278EC16ACA43400D43BC7 /* ofxSerial.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ofxSerial.h; sourceTree = "<group>"; };
+		1D1278F616ACA9E000D43BC7 /* Doodle3DDebug.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Doodle3DDebug.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		1D1C99A916623FDD008B975B /* start.gcode */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = start.gcode; path = bin/data/gcode/start.gcode; sourceTree = "<group>"; };
 		1D1C99AB16623FE1008B975B /* end.gcode */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = end.gcode; path = bin/data/gcode/end.gcode; sourceTree = "<group>"; };
-		1D2D06201664AF8100A9F8BC /* Doodle3DDebug.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Doodle3DDebug.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		1D4D108D16AD6DBB00CCBCF1 /* Abel-Regular.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; name = "Abel-Regular.ttf"; path = "bin/data/Abel-Regular.ttf"; sourceTree = "<group>"; };
 		1D77DEAB16A7123100B43A9A /* settings.html */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.html; name = settings.html; path = bin/data/www/settings.html; sourceTree = "<group>"; };
 		1D77DEAD16A71E3E00B43A9A /* thermobg.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = thermobg.png; path = bin/data/images/thermobg.png; sourceTree = "<group>"; };
 		1D77DEAF16A86EAD00B43A9A /* shapes.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = shapes.png; path = bin/data/images/shapes.png; sourceTree = "<group>"; };
@@ -118,7 +121,6 @@
 		1D83E084158A505D005F0922 /* ofxExtras.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ofxExtras.h; sourceTree = "<group>"; };
 		1D83E085158A505D005F0922 /* README */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = README; sourceTree = "<group>"; };
 		1D83E089158A5307005F0922 /* ofxUltimaker.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ofxUltimaker.h; sourceTree = "<group>"; };
-		1D83E08A158A530E005F0922 /* ofxUltimaker.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ofxUltimaker.cpp; sourceTree = "<group>"; };
 		1D9EB08416A3099A002106A7 /* favicon.ico */ = {isa = PBXFileReference; lastKnownFileType = image.ico; name = favicon.ico; path = bin/data/www/favicon.ico; sourceTree = "<group>"; };
 		1D9EB08516A3099A002106A7 /* 404.html */ = {isa = PBXFileReference; lastKnownFileType = text.html; name = 404.html; path = bin/data/www/404.html; sourceTree = "<group>"; };
 		1D9EB08616A3099A002106A7 /* script.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; name = script.js; path = bin/data/www/script.js; sourceTree = "<group>"; };
@@ -139,8 +141,6 @@
 		1DC9E34816425B5100A90E2A /* ofxHTTPServer.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ofxHTTPServer.cpp; sourceTree = "<group>"; };
 		1DC9E34916425B5100A90E2A /* ofxHTTPServer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ofxHTTPServer.h; sourceTree = "<group>"; };
 		1DC9E3561642658A00A90E2A /* libmicrohttpd.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libmicrohttpd.a; path = addons/ofxHttpServer/libs/microhttpd/lib/macosx/libmicrohttpd.a; sourceTree = "<group>"; };
-		1DF7B5DE165E20480064F71E /* ofxArgParser.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ofxArgParser.cpp; sourceTree = "<group>"; };
-		1DF7B5DF165E20480064F71E /* ofxArgParser.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ofxArgParser.h; sourceTree = "<group>"; };
 		BBAB23BE13894E4700AA2426 /* GLUT.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = GLUT.framework; path = ../../../libs/glut/lib/osx/GLUT.framework; sourceTree = "<group>"; };
 		E4328143138ABC890047C5CB /* openFrameworksLib.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = openFrameworksLib.xcodeproj; path = ../../../libs/openFrameworksCompiled/project/osx/openFrameworksLib.xcodeproj; sourceTree = SOURCE_ROOT; };
 		E45BE9710E8CC7DD009D7055 /* AGL.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AGL.framework; path = /System/Library/Frameworks/AGL.framework; sourceTree = "<absolute>"; };
@@ -187,6 +187,16 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		1D1278EA16ACA43400D43BC7 /* ofxSerial */ = {
+			isa = PBXGroup;
+			children = (
+				1D1278EB16ACA43400D43BC7 /* ofxSerial.cpp */,
+				1D1278EC16ACA43400D43BC7 /* ofxSerial.h */,
+			);
+			name = ofxSerial;
+			path = addons/ofxSerial;
+			sourceTree = "<group>";
+		};
 		1D77DEB116A86EB300B43A9A /* images */ = {
 			isa = PBXGroup;
 			children = (
@@ -205,6 +215,7 @@
 		1D82A77B1658F3740070EBC8 /* Resources */ = {
 			isa = PBXGroup;
 			children = (
+				1D4D108D16AD6DBB00CCBCF1 /* Abel-Regular.ttf */,
 				1D77DEB116A86EB300B43A9A /* images */,
 				1D9EB09A16A30ABC002106A7 /* www */,
 				1D82A79E1658F6960070EBC8 /* Doodle3D.icns */,
@@ -219,7 +230,6 @@
 		1D83E078158A505D005F0922 /* ofxUltimaker */ = {
 			isa = PBXGroup;
 			children = (
-				1D83E08A158A530E005F0922 /* ofxUltimaker.cpp */,
 				1D83E089158A5307005F0922 /* ofxUltimaker.h */,
 			);
 			name = ofxUltimaker;
@@ -342,28 +352,10 @@
 			path = src;
 			sourceTree = "<group>";
 		};
-		1DF7B5CE165E20480064F71E /* ofxArgParser */ = {
-			isa = PBXGroup;
-			children = (
-				1DF7B5DD165E20480064F71E /* src */,
-			);
-			name = ofxArgParser;
-			path = addons/ofxArgParser;
-			sourceTree = "<group>";
-		};
-		1DF7B5DD165E20480064F71E /* src */ = {
-			isa = PBXGroup;
-			children = (
-				1DF7B5DE165E20480064F71E /* ofxArgParser.cpp */,
-				1DF7B5DF165E20480064F71E /* ofxArgParser.h */,
-			);
-			path = src;
-			sourceTree = "<group>";
-		};
 		BB4B014C10F69532006C3DED /* addons */ = {
 			isa = PBXGroup;
 			children = (
-				1DF7B5CE165E20480064F71E /* ofxArgParser */,
+				1D1278EA16ACA43400D43BC7 /* ofxSerial */,
 				1DC9E32D16425B5100A90E2A /* ofxHttpServer */,
 				1D83E078158A505D005F0922 /* ofxUltimaker */,
 				1D83E079158A505D005F0922 /* ofxIniSettings */,
@@ -428,7 +420,7 @@
 				E4EEC9E9138DF44700A80321 /* openFrameworks */,
 				BB4B014C10F69532006C3DED /* addons */,
 				E45BE5980E8CC70C009D7055 /* frameworks */,
-				1D2D06201664AF8100A9F8BC /* Doodle3DDebug.app */,
+				1D1278F616ACA9E000D43BC7 /* Doodle3DDebug.app */,
 			);
 			sourceTree = "<group>";
 		};
@@ -476,7 +468,7 @@
 			);
 			name = Doodle3D;
 			productName = myOFApp;
-			productReference = 1D2D06201664AF8100A9F8BC /* Doodle3DDebug.app */;
+			productReference = 1D1278F616ACA9E000D43BC7 /* Doodle3DDebug.app */;
 			productType = "com.apple.product-type.application";
 		};
 /* End PBXNativeTarget section */
@@ -551,6 +543,7 @@
 				1D77DEAC16A7123100B43A9A /* settings.html in Resources */,
 				1D77DEAE16A71E3E00B43A9A /* thermobg.png in Resources */,
 				1D77DEB016A86EAD00B43A9A /* shapes.png in Resources */,
+				1D4D108E16AD6DBB00CCBCF1 /* Abel-Regular.ttf in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -581,9 +574,8 @@
 				1D83E086158A505D005F0922 /* ofxIniSettings.cpp in Sources */,
 				1D83E087158A505D005F0922 /* ofxGCode.cpp in Sources */,
 				1D83E088158A505D005F0922 /* ofxExtras.cpp in Sources */,
-				1D83E08B158A530E005F0922 /* ofxUltimaker.cpp in Sources */,
 				1DC9E35116425B5100A90E2A /* ofxHTTPServer.cpp in Sources */,
-				1DF7B5EB165E20480064F71E /* ofxArgParser.cpp in Sources */,
+				1D1278ED16ACA43400D43BC7 /* ofxSerial.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

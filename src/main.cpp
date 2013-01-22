@@ -3,16 +3,20 @@
 #include "ofxExtras.h"
 #include "ofxIniSettings.h"
 #include "ofxUltimaker.h"
+#include "ofxGCode.h"
 #include "ofxHTTPServer.h"
+
+static const string VERSION = "osx-0011";
 
 //globals
 ofPath path;
 ofImage mask;
 ofxIniSettings ini;
-ofxUltimaker ultimaker;
 ofxGCode gcode;
 const int vres=1000;
 float vfunc[vres];
+char previewShape=0;
+string shapeString = "#_&|/%^$\\";
 float twists=0;
 float objectHeight=10;
 float layerHeight=.2;
@@ -38,6 +42,13 @@ string doodlesFolder;
 string gcodeFolder;
 map<string,string> params;
 string statusMessage;
+ofRectangle shapeButtons(888,118,147,45);
+int fps=30;
+bool autoWarmUp=true;
+bool autoWarmUpRequested=false;
+string autoWarmUpCommand="M104 S230";
+int autoWarmUpDelay=3;
+int checkTemperatureInterval=1;
 
 float scaleFunction(float f) {
     return vfunc[int(ofMap(f, 0, 1, vres-1, 0, true))];
@@ -56,6 +67,7 @@ Files files;
 class ofApp : public ofBaseApp, public ofxHTTPServerListener {
 public:
 
+    ofxUltimaker ultimaker;
     ofImage bg,bg_busy,vb,shapes;
     Btn btnNew,btnSave,btnOops,btnLoadPrevious,btnLoadNext,btnPrint,btnStop;
     Btn btnTwistLeft,btnTwistRight,btnZoomIn,btnZoomOut,btnHigher,btnLower;
@@ -66,6 +78,7 @@ public:
     ofxHTTPServer *server;
     ofSerial tmp;
     string ipaddress,networkName;
+    ofTrueTypeFont font;
 
     void setup() {        
         ofSetDataPathRoot("../Resources/");
@@ -83,11 +96,13 @@ public:
         
         if (params["loadSettings"]!="") {
             string folder = ofFilePath::getPathForDirectory("~/Documents/Doodle3D/");
+            cout << "loadSettings: " << (folder+params["loadSettings"]) << endl;
             ini.load(folder+params["loadSettings"]);
         }
         
         ofSetDataPathRoot(resourceFolder);
         
+        fps = ini.get("frameRate",fps);
         deviceSpeed = ini.get("device.speed",deviceSpeed);
         deviceAutoDetect = ini.get("device.autoDetect",true);
         targetTemperature = ini.get("targetTemperature",targetTemperature);
@@ -113,12 +128,16 @@ public:
         twists = ini.get("twists",twists);
         printer.filamentThickness = ini.get("filamentThickness",printer.filamentThickness);
         printer.loopAlways = ini.get("loopAlways",printer.loopAlways);
-        thermometer.showWarmUp = ini.get("showWarmUp",thermometer.showWarmUp);
+        autoWarmUp = ini.get("autoWarmUp",true);
+        autoWarmUpCommand = ini.get("autoWarmUpCommand",autoWarmUpCommand);
+        autoWarmUpDelay = ini.get("autoWarmUpDelay",autoWarmUpDelay)*fps; //multiplied by fps
         serverPort = ini.get("server.port",serverPort);
         deviceName = ini.get("device.name",deviceName);
         simplifyIterations = ini.get("simplify.iterations",simplifyIterations);
         simplifyMinNumPoints = ini.get("simplify.minNumPoints",simplifyMinNumPoints);
         simplifyMinDistance = ini.get("simplify.minDistance",simplifyMinDistance);
+        checkTemperatureInterval = ini.get("checkTemperatureInterval",checkTemperatureInterval);
+        
         
         btnNew.setup(0xffff00);
         btnSave.setup(0x00ff00);
@@ -143,28 +162,14 @@ public:
         ofEnableAlphaBlending();
         ofRectangle window = ini.get("window.bounds",ofRectangle(0,0,1280,800));
         ofxSetWindowRect(window);
+        ofSetLogLevel((ofLogLevel)ini.get("loglevel",2));
         ofSetFullscreen(ini.get("window.fullscreen",true));
-        if (window.width!=ofGetScreenWidth()) ofSetFullscreen(false);
-        ofSetFrameRate(ini.get("frameRate", 30));
+        font.loadFont("Abel-Regular.ttf", 14, true, false, true);
+       
+        ofSetFrameRate(fps);
         ofSetEscapeQuitsApp(ini.get("quitOnEscape",true));
         ofEnableSmoothing();
         ofBackground(255);
-
-        if (deviceAutoDetect) {
-            deviceName = detectDeviceName();
-        } else {
-            deviceName = ini.get("device.name","");
-        }
-        
-        if (deviceName!="") {
-            string str = "connecting to " + deviceName + " @ " + ofToString(deviceSpeed) + "bps";
-            cout << str << endl;
-            if (!ultimaker.connect(deviceName,deviceSpeed)) {
-                deviceName += ": not connected";
-            }
-        } else {
-            deviceName = deviceAutoDetect ? "could not autoDetect device" : "device name is empty";
-        }
         
         server = ofxHTTPServer::getServer(); // get the instance of the server
         server->setServerRoot(".");          // folder with files to be served
@@ -175,26 +180,15 @@ public:
         
         files.setup();
         
-        if (ini.get("centerWindow",true)) {
+        if (ini.get("window.center",true)) {
             int x = ofGetScreenWidth()/2 - window.width/2;
             int y = ofGetScreenHeight()/2 - window.height/2;
             ofSetWindowPosition(x,y);
         }
         
         refreshDebugInfo();
-    }
-    
-    string detectDeviceName() {
-        ofSerial serial;
-        vector<ofSerialDeviceInfo> devices = serial.getDeviceList();
-
-        for (int i=0; i<devices.size(); i++){
-            if (devices[i].getDeviceName().find("usbmodem")!=string::npos ||
-                devices[i].getDeviceName().find("usbserial")!=string::npos) { //osx
-                return devices[i].getDeviceName();
-            }
-        }
-        return "";
+        
+        ultimaker.setup();
     }
     
     void getRequest(ofxHTTPServerResponse & response) {
@@ -217,21 +211,20 @@ public:
     }
 
     void update() {
-        if (connectionFailed) thermometer.visible = false;
-            
-        canvas.update();
+        thermometer.temperature = ultimaker.temperature;
         
-        if (ini.get("autoWarmUp",true) && ofGetFrameNum()==100) {
-            if (deviceSpeed==57600) {
-                ultimaker.send("M104 S" + ofToString(targetTemperature));
-            } else {
-                ultimaker.send("M109 S" + ofToString(targetTemperature));
-            }
+        //send autoWarmUp command
+        if (!autoWarmUpRequested && autoWarmUp && ultimaker.isStartTagFound && autoWarmUpDelay--<0) {
+            ultimaker.sendCommand(autoWarmUpCommand);
+            autoWarmUpRequested = true;
         }
 
-        if (deviceSpeed==57600 && !ultimaker.isBusy && ofGetFrameNum()>100 && ofGetFrameNum()%120==0) {
-            ultimaker.readTemperature();
+        //check temperature
+        if (ultimaker.isStartTagFound && checkTemperatureInterval!=0 && ofGetFrameNum() % (checkTemperatureInterval*fps)==0) {
+            ultimaker.sendCommand("M105",1);
         }
+        
+        canvas.update();
         
         if (btnZoomIn.selected) canvas.zoom(1);
         if (btnZoomOut.selected) canvas.zoom(-1);
@@ -252,57 +245,51 @@ public:
         ofScale(globalScale,globalScale);
         ofSetColor(255);
         
-        if (connectionFailed) bg.draw(0,0);
-        else if (ultimaker.temperature<targetTemperature ||
-                 ultimaker.isBusy ||
-                 !ultimaker.isStartTagFound ||
-                 (ini.get("autoWarmUp",true) && ofGetFrameNum()<100)) {
-             bg_busy.draw(0,0);
-        } else {
-             bg.draw(0,0);
-        }
+        bg.draw(0,0);
         
         canvas.draw();
         if (debug) canvas.drawDebug();
         side.draw();
-        shapes.draw(side.bounds.x-15,side.bounds.y-40);
-        thermometer.draw();
+        shapes.draw(shapeButtons.x,shapeButtons.y);
+        if (ultimaker.isStartTagFound) thermometer.draw();
         ofSetColor(0);
         
-        if (ofGetFrameNum()<10*30 && !ultimaker.isStartTagFound) {
-            statusMessage = "Connecting to Ultimaker...";
-        } else if (ofGetFrameNum()>10*30 && ofGetFrameNum()<20*30 && !ultimaker.isStartTagFound) {
-            statusMessage = "Failed to connect. Please run Marlin firmware at 115200 bps";
-            connectionFailed = true;
-        }
-            	
-        if (ultimaker.isStartTagFound) statusMessage = "Connected";
-        
-        if (debug) {
-            ofSetupScreen();
-            float x=220*globalScale,y=180*globalScale;
-            ofDrawBitmapString("status: " + statusMessage,x,y+=15);
-            ofDrawBitmapString("deviceName: " + deviceName,x,y+=15);
-            ofDrawBitmapString("deviceSpeed: " + ofToString(deviceSpeed),x,y+=15);
-            ofDrawBitmapString("fps: " + ofToString(ofGetFrameRate(),0),x,y+=15);
-            ofDrawBitmapString("file: " + files.getFilename(),x,y+=15);
-            ofDrawBitmapString("numVertices (3d view): " + ofToString(side.numVertices),x,y+=15);
-            ofDrawBitmapString("WiFi network: " + networkName,x,y+=15);
-            ofDrawBitmapString("ip-address: " + ipaddress,x,y+=15);
-            ofDrawBitmapString("port: " + ofToString(serverPort),x,y+=15);
-        }
+        if (debug) drawConsole();
     }
 
+    void drawConsole() {
+        #define console(s) font.drawStringAsShapes(string(s).substr(0,MIN(string(s).size(),75)),x,y+=h);
+        float x=220, y=175, h=17;
+        console("Doodle3D " + VERSION + " - Copyright (c) 2012-2013 by Rick Companje");
+        console("=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=");
+        string connectionStatus = ultimaker.isConnectedToPort ? "Connected to port" : "NOT connected to port";
+        string startTagStatus = ultimaker.isStartTagFound ? "The Marlin 'start' tag was found (this is good)" : "Start tag not found. Please check firmware or connection speed";
+        console(connectionStatus + " " + deviceName + " @ " + ofToString(deviceSpeed) + "bps");
+        console(startTagStatus);
+        if (ultimaker.temperature!=0) console("Temperature: " + ofToString(ultimaker.temperature));
+        console("Framerate: " + ofToString(ofGetFrameRate(),0));
+        console("iPad version: http://" + ipaddress + ":" + ofToString(serverPort) + " on WiFi network: " + networkName);
+        console("=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=");
+        for (int i=MAX(0,ultimaker.messages.size()-19); i<ultimaker.messages.size(); i++) {
+            console(ultimaker.messages.at(i));
+        }
+        #undef console
+    }
+    
     void stop() {
-        ultimaker.stopPrint();
-        ultimaker.load(resourceFolder+"end.gcode");
-        ultimaker.startPrint();
+        ultimaker.sendCommandsFromFile(resourceFolder+"end.gcode",true);
     }
     
     void print(bool exportOnly=false) {
         ofxSimplifyPath(path,simplifyIterations,simplifyMinNumPoints,simplifyMinDistance);
-        if (ofGetFrameRate()<20) side.is3D=false;
-        printer.print(resourceFolder+"start.gcode",resourceFolder+"end.gcode");
+        
+        string hourMinutes = ofxFormatDateTime(ofxGetDateTime(),"%H.%M");
+        string outputFilename = gcodeFolder+files.getFilename()+"_"+hourMinutes+".gcode";
+        printer.print(outputFilename, resourceFolder+"start.gcode",resourceFolder+"end.gcode");
+        
+        if (exportOnly) return;
+        
+        ultimaker.sendCommandsFromFile(outputFilename);
     }
 
     void mousePressed(int x, int y, int button) {
@@ -324,6 +311,11 @@ public:
         if (btnLower.hitTest(x,y)) btnLower.selected=true;
         if (btnTwistLeft.hitTest(x,y)) btnTwistLeft.selected=true;
         if (btnTwistRight.hitTest(x,y)) btnTwistRight.selected=true;
+
+        if (shapeButtons.inside(x,y)) {
+            int index = ofNormalize(x,shapeButtons.x,shapeButtons.x+shapeButtons.width) * shapeString.size();
+            side.setShape(shapeString.at(index));
+        }
     }
 
     void mouseDragged(int x, int y, int button) {
@@ -333,7 +325,19 @@ public:
         canvas.mouseDragged(x, y, button);
         side.mouseDragged(x, y, button);
     }
-
+    
+    
+    void mouseMoved(int x, int y) {
+        x /= globalScale;
+        y /= globalScale;
+        
+        if (shapeButtons.inside(x,y)) {
+            previewShape = shapeString.at(ofNormalize(x,shapeButtons.x,shapeButtons.x+shapeButtons.width) * shapeString.size());
+        } else {
+            previewShape = 0;
+        }
+    }
+    
     void mouseReleased(int x, int y, int button) {
         x /= globalScale;
         y /= globalScale;
@@ -349,6 +353,8 @@ public:
         btnLower.selected=false;
         btnTwistLeft.selected=false;
         btnTwistRight.selected=false;
+        
+        
     }
 
     void showHelp() {
@@ -365,11 +371,15 @@ public:
     }
     
     string getIP() {
-        return ofxExecute("ifconfig en1 | grep 'inet ' | cut -d ' ' -f2");
+        string ip = ofxExecute("ifconfig en1 | grep 'inet ' | cut -d ' ' -f2");
+        if (ip=="") return "[unknown]";
+        else return ip;
     }
 
     string getWirelessNetwork() {
-        return ofxExecute("networksetup -getairportnetwork en1 | cut -c 24-");
+        string network = ofxExecute("networksetup -getairportnetwork en1"); // | cut -c 24-");
+        if (network=="You are not associated with an AirPort network.") return "[unknown]";
+        else return network.substr(24);
     }
     
     void refreshDebugInfo() {
@@ -389,24 +399,28 @@ public:
             case 'b': useSubpathColors=!useSubpathColors; break;
             case 'C': canvas.createCircle(); break;
             case 'c': case 'n': canvas.clear(); files.unloadFile(); break;
-            case 'd': debug=!debug; refreshDebugInfo(); break;
+            case 'd': case 'i': debug=!debug; refreshDebugInfo(); break;
             case 'e': print(true); break;
             case 'f': ofToggleFullscreen(); break;
             case 'h': objectHeight+=5; if (objectHeight>maxObjectHeight) objectHeight=maxObjectHeight; break;
             case 'H': objectHeight-=5; if (objectHeight<3) objectHeight=3; break;
+            case 'G': ultimaker.sendCommand("G28 X0 Y0 Z0\nM84",2); break;
+            case 'A': ultimaker.sendCommand("M84"); break;
+            case 'T': ultimaker.sendCommand("M109 S230"); break;
             case 'l': files.loadNext(); break;
             case 'L': files.loadPrevious(); break;
             case 'o': files.load(); break;
             case 'p': case 'm': case OF_KEY_RETURN: print(); break;
             case 'q': stop(); break;
-            case 'r': ultimaker.setRelative(); break;
+//            case 'r': ultimaker.setRelative(); break;
             case 'S': files.save(); break;
             case 's': files.saveAs(); break;
-            case 't': ultimaker.readTemperature(); break;
+            case 't': ultimaker.sendCommand("M105",1); break;
             case 'u': case 'z': canvas.undo(); break;
             case '~': files.deleteCurrentFile(); break;
             case ' ': files.listDir(); break;
             case 'x': files.saveSvg(resourceFolder+"template.svg",documentFolder+"output.svg"); break;
+            case 27: if (ultimaker.isThreadRunning()) ultimaker.stopThread(); break;
         }
     }
     
@@ -419,7 +433,11 @@ public:
 int main(int argc, const char** argv){
     for (int i=0; i<argc; i++) {
         vector<string> keyvalue = ofSplitString(argv[i], "=");
-        if (keyvalue.size()==2) params[keyvalue[0]] = keyvalue[1];
+        if (keyvalue.size()==2) {
+            params[keyvalue[0]] = keyvalue[1];
+            cout << "param: " << keyvalue[0] << "=" << keyvalue[1] << endl;
+        }
+
     }
     
     ofAppGlutWindow window;

@@ -7,7 +7,7 @@ public:
     float screenToMillimeterScale;
     float wallThickness;
     float zOffset;
-    float useSubLayers;
+    bool useSubLayers;
     float filamentThickness;
     float minimalDistanceForRetraction;
     float retraction;
@@ -26,10 +26,11 @@ public:
         useSubLayers=true;
         filamentThickness=2.89;
         loopAlways=false;
+        retraction=0;
     }
     
-    void print(string startGcodeFilename, string endGcodeFilename, bool exportOnly=false) {
-        cout << "print" << endl;
+    void print(string outputGcodeFilename, string startGcodeFilename, string endGcodeFilename) { //, bool exportOnly=false) {
+        cout << "printing to: " << outputGcodeFilename << endl;
                 
         gcode.lines.clear();
         gcode.insert(startGcodeFilename);
@@ -68,6 +69,8 @@ public:
             
             enableTraveling = ini.get("enableTraveling",true);
             
+//            cout << "zOffset: " << zOffset << endl;
+            
             int curLayerCommand=0;
             int totalLayerCommands=points.size();
                                     
@@ -78,18 +81,19 @@ public:
                 for (int i=0; i<commands.size(); i++) {
                     int last = commands.size()-1;                
                     ofPoint to = commands[(even || isLoop || loopAlways) ? i : last-i].to;
-                    float sublayer = layer==0 ? 0 : layer + (useSubLayers ? float(curLayerCommand)/totalLayerCommands : 0);
+                    float sublayer = (layer==0) ? 0.0 : layer + (useSubLayers ? float(curLayerCommand)/totalLayerCommands : 0);
                     float z = sublayer*layerHeight+zOffset;
-                    bool isTraveling = !isLoop && i==0 && prev.distance(to)>minimalDistanceForRetraction;
+                    //ofxExit();
+                    bool isTraveling = i==0; //!isLoop && i==0 && prev.distance(to)>minimalDistanceForRetraction;
                     
                     if (enableTraveling && isTraveling) {
-                         gcode.addCommandWithParams("G1 E%03f F%03f", extruder-retraction, retractionSpeed);   
-                         gcode.addCommandWithParams("G1 X%03f Y%03f Z%03f F%03f", to.x, to.y, z, speed*60);
-                         gcode.addCommandWithParams("G1 E%03f F%03f", extruder, retractionSpeed);
+                         //gcode.addCommandWithParams("G1 E%03f F%03f", extruder-retraction, retractionSpeed);
+                         gcode.addCommandWithParams("G1 X%.03f Y%.03f Z%.03f F%.03f", to.x, to.y, z, travelSpeed*60);
+                         //gcode.addCommandWithParams("G1 E%03f F%03f", extruder, retractionSpeed);
                     }
                     else {
                         extruder += prev.distance(to) * wallThickness * layerHeight / filamentThickness;
-                        gcode.addCommandWithParams("G1 X%03f Y%03f Z%03f F%03f E%03f", to.x, to.y, z, travelSpeed*60, extruder);
+                        gcode.addCommandWithParams("G1 X%.03f Y%.03f Z%.03f F%.03f E%.03f", to.x, to.y, z, speed*60, extruder);
                     }                    
                     
                     curLayerCommand++;
@@ -102,33 +106,32 @@ public:
         } //for layers
         
         gcode.insert(endGcodeFilename);
-        string hourMinutes = ofxFormatDateTime(ofxGetDateTime(),"%H.%M");
-        string filename = gcodeFolder+files.getFilename()+"_"+hourMinutes+".gcode";
-        gcode.save(filename);
+        gcode.save(outputGcodeFilename);
                 
-        if (exportOnly) {
-            ofFile f(filename);
-            string copyGCodeToPath = ini.get("copyGCodeToPath","");
-            if (copyGCodeToPath!="") {
-                ofFile sd(copyGCodeToPath);
-                string shortName = f.getFileName().substr(0,8);
-                shortName = ofxStringBeforeFirst(shortName, "."); //remove ext
-                if (sd.exists()) {
-                    cout << "copy " << shortName+".gco" << " to " << copyGCodeToPath << endl;
-                    f.copyTo(copyGCodeToPath+"/"+shortName+".gco");
-                }
-            }
-        }
-        
-        if (exportOnly || ini.get("printingDisabled",false)==true) return;
+//        if (exportOnly) {
+//            ofFile f(filename);
+//            string copyGCodeToPath = ini.get("copyGCodeToPath","");
+//            if (copyGCodeToPath!="") {
+//                ofFile sd(copyGCodeToPath);
+//                string shortName = f.getFileName().substr(0,8);
+//                shortName = ofxStringBeforeFirst(shortName, "."); //remove ext
+//                if (sd.exists()) {
+//                    cout << "copy " << shortName+".gco" << " to " << copyGCodeToPath << endl;
+//                    f.copyTo(copyGCodeToPath+"/"+shortName+".gco");
+//                }
+//            }
+//        }
+//        
+//        if (exportOnly || ini.get("printingDisabled",false)==true) return;
         
         //send generated gcode to printer
-        cout << "ultimaker.isBusy: " << ultimaker.isBusy << endl;
-        cout << "frame: " << ofGetFrameNum() << endl;
-        if (ofGetFrameNum()<210 || ultimaker.isBusy) return;
-        
-        ultimaker.load(filename);
-        ultimaker.startPrint();
+//        cout << "ultimaker.isBusy: " << ultimaker.isBusy << endl;
+//        cout << "frame: " << ofGetFrameNum() << endl;
+//        if (ofGetFrameNum()<210 || ultimaker.isBusy) return;
+//        
+//        ultimaker.load(filename);
+//        ultimaker.startPrint();
+//        ultimaker.sendCommandsFromFile(filename);
     }
     
 };
