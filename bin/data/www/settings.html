@@ -1,0 +1,209 @@
+<html>
+<head>
+	<script src="jquery-1.8.2.min.js" type="text/javascript"></script>
+	<style>
+		body,th,td {
+			font-family: Arial;
+			font-size: 13px;
+		}
+		#advancedSettings {
+			width: 100%;
+			height: 300px;
+		}
+		fieldset {
+			width: 600px;
+			border: 1px solid black;
+			border-radius: 10px;
+			margin-bottom: 20px;
+		}
+		label {
+			min-width: 150px;
+			display: inline-block;
+		}
+		textarea {
+			border-radius: 10px;
+		}
+		input[type="text"] {
+			border: 1px solid black;
+			margin-right: 5px;
+		}
+		input[type="text"].small {
+			width: 50px;
+		}
+		legend {
+			font-weight: bold;
+			font-family: Arial;
+		}
+		select {
+			margin-left: -4px;
+		}
+		textarea.gcode {
+			width: 280px;
+			height: 150px;
+			margin-right: 20px;
+		}
+	</style>
+</head>
+<body>
+
+<img width="100" src="icon.png">
+<br>
+<h1>Settings </h1>
+<h3 style="color:red; font-weight:bold">(non-functioning preview)</h3>
+
+<form>
+<fieldset>
+    <legend>3D printer</legend>
+    <label for="deviceType">Type:</label>
+    <select id="deviceType">
+		<option value="ultimaker">Ultimaker</option>
+		<option value="ultimaker">Makerbot CupCake</option>
+		<option value="reprap">Prusa Mendel</option>
+    </select>
+    <br>
+    <label for="deviceSpeed">Speed:</label>
+    <select id="deviceSpeed">
+		<option value="115200">115200 bps</option>
+		<option value="2500000">2500000 bps</option>
+    </select>
+    <br>
+    <label for="devicePort">Port:</label>
+    <select id="devicePort">
+		<option value="/dev/tty.usbmodem411">/dev/tty.usbmodem411</option>
+		<option value="/dev/tty.usbmodem602">/dev/tty.usbmodem621</option>
+    </select>
+    <button>Check connection...</button>
+</fieldset>
+
+<fieldset>
+    <legend>Print settings</legend>
+    <label for="layerHeight">Layer height:</label><input type="text" class="small" name="layerHeight" id="layerHeight" value="0.2">mm<br>
+    <label for="wallThickness">Wall thickness:</label><input type="text" class="small" name="wallThickness" id="wallThickness" value="0.6">mm<br>
+    <label for="filamentThickness">Filament thickness:</label><input type="text" class="small" name="filamentThickness" id="filamentThickness" value="2.89">mm<br>
+    <br>
+    <label for="speed">Speed:</label><input type="text" name="speed" id="speed" class="small" value="50">mm/s<br>
+    <label for="travelSpeed">Travel speed:</label><input type="text" name="travelSpeed" id="travelSpeed" class="small" value="200">mm/s<br>
+    <br>
+    <label for="autoWarmUp">Auto warm-up:</label><input type="checkbox" name="autoWarmUp" id="autoWarmUp" value="autoWarmUp" checked><br>
+    <label for="firstLayerSlow">First layer slow:</label><input type="checkbox" name="firstLayerSlow" id="firstLayerSlow" value="firstLayerSlow" checked><br>
+    <label for="useSubLayers">Use sub-layers:</label><input type="checkbox" name="useSubLayers" id="useSubLayers" value="firstLayerSlow" checked><br>
+    <label for="useRetraction">Use retraction:</label><input type="checkbox" name="useRetraction" id="useRetraction" value="useRetraction" checked><br>
+</fieldset>
+
+<fieldset>
+    <legend>Doodle3D shape settings</legend>
+    
+	<label for="minScale">Minimum scale:</label><input type="text" class="small" name="minScale" id="minScale" value="0.3"><br>
+	<label for="maxScale">Maximum scale:</label><input type="text" class="small" name="maxScale" id="maxScale" value="0.8"><br>
+	<label for="twists">Twists:</label><input type="text" class="small" name="twists" id="twists" value="1.5"><br>
+
+	<label for="shape">Vertical shape:</label>
+    <select id="shape">
+		<option value="/">/</option>
+		<option value="|">|</option>
+		<option value="/">\</option>
+		<option value="#">#</option>
+		<option value="$">$</option>
+		<option value="%">%</option>
+		<option value="^">^</option>
+		<option value="*">*</option>
+    </select>
+    
+    <br>
+    <label for="simplify">Simplify shape:</label>
+    <select id="shape">
+    	<option value="strong">strong</option>
+    	<option value="normal" selected>normal</option>
+    	<option value="less">less</option>
+    	<option value="none">no</option>
+    </select>
+</fieldset>
+
+<fieldset>
+    <legend>Webserver</legend>
+    <label for="serverPort">Port:</label><input type="text" class="small" name="serverPort" id="serverPort" value="8888"><br>
+    <label for="ipaddress">IP-address:</label><input readonly type="text" name="serverPort" id="serverIP" value="192.168.2.1"><br>
+</fieldset>
+
+<fieldset>
+    <legend>Application settings</legend>
+    <label for="fullscreen">Start fullscreen:</label><input type="checkbox" name="fullscreen" id="fullscreen" value="fullscreen" checked><br>
+    <label for="centerWindow">Center window:</label><input type="checkbox" name="centerWindow" id="centerWindow" value="centerWindow" checked><br>
+    <label for="windowWidth">Window width:</label><input type="text" class="small" name="layerHeight" id="layerHeight" value="1120">px<br>
+    <label for="windowHeight">Window height:</label><input type="text" class="small" name="layerHeight" id="layerHeight" value="700">px<br>
+</fieldset>
+
+<fieldset>
+	<legend>GCODE settings</legend><br>
+
+	<table>
+		<tr>
+			<td>
+				<label for="startgcode">Start:</label><br>
+				<textarea id="startgcode" class="gcode">
+G21 (mm)
+G91 (relative)
+G28 X0 Y0 Z0 (physical home)
+M104 S230 (temperature)
+G1 E10 F250 (flow)
+G92 X-100 Y-100 Z0 E10
+G1 Z3 F5000 (prevent diagonal line)
+G90 (absolute)
+M106 (fan on)
+			</textarea>
+
+			</td>
+			<td>
+				<label for="endgcode">End:</label><br>
+				<textarea id="endgcode" class="gcode">
+G1 X-100 Y-100 F15000 (fast homing)
+M107
+M84 (disable axes)
+				</textarea>
+			</td>
+		</tr>
+	</table>
+
+    
+    
+<br>
+
+
+
+
+</fieldset>
+
+<fieldset>
+<legend>Advanced settings</legend>
+<textarea id="advancedSettings">
+debug=false
+zOffset=0
+autoLoadImage=hand.txt
+loadOffset=0,0
+showWarmUp=true
+loopAlways=false
+useSubpathColors=false
+maxObjectHeight=200
+maxScaleDifference=.1
+frameRate=60
+quitOnEscape=true
+screenToMillimeterScale=.3
+targetTemperature=230
+simplify.iterations=10
+simplify.minNumPoints=15
+simplify.minDistance=3
+retraction.speed=250
+retraction.minDistance=1
+retraction.amount=2
+side.is3D=true
+side.visible=true
+side.bounds=900,210,131,390
+side.border=880,169,2,471
+</textarea>
+</fieldset>
+<br>
+<input type="submit" value="Save settings">
+</form>
+<br><br>
+</body>
+</html>

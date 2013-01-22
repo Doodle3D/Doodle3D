@@ -1,0 +1,60 @@
+body {
+	background-image: url("bg_horizontal.jpg");
+	background-repeat: no-repeat;
+}
+
+@media (orientation: portrait) {
+	body {
+		background-repeat: no-repeat;
+		background-position: center; 
+		background-image: url("bg_vertical.jpg");
+	}
+	svg {
+		display: none;
+	}
+}
+
+#logo {
+	position: absolute;
+	left: 50%;
+	margin-left: -220px;
+	width: 400px;
+	height: 140px;
+}
+
+#btnPrint {
+	width: 190px;
+	height: 170px;
+	left: 805px;
+	top: 15px;
+}
+
+#btnNew {
+	width: 110px;
+	height: 110px;
+	left: 855px;
+	top: 210px;
+}
+
+#btnOops {
+	width: 110px;
+	height: 110px;
+	left: 870px;
+	top: 350px;
+}
+
+.btn {
+	position: absolute;
+	-webkit-user-select: none;
+	cursor: hand;
+}
+
+canvas, #editor, svg { 
+	position: absolute;
+	top: 160px;
+	left: 150px;
+	width: 640px;
+	height: 450px;
+	cursor: hand;
+}
+
