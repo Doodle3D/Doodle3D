@@ -57,6 +57,7 @@ public:
     string lineBuffer;
     void writeLine(string str);
     string readLine(char until='\n');
+    vector<string> getArduinoDevices(bool fullpath=true);
 
 
 protected:

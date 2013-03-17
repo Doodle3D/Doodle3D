@@ -16,6 +16,7 @@ public:
     bool enableTraveling;
     float speed;
     float travelSpeed;
+    float hop;
 
     Printer() {
         screenToMillimeterScale=.3f;
@@ -27,6 +28,8 @@ public:
         filamentThickness=2.89;
         loopAlways=false;
         retraction=0;
+        minimalDistanceForRetraction=1;
+        hop=0;
     }
 
     void print(string outputGcodeFilename, string startGcodeFilename, string endGcodeFilename) { //, bool exportOnly=false) {
@@ -63,8 +66,8 @@ public:
 
             if (layer==0) {
                 gcode.add("M107");
-                if (ini.get("firstLayerSlow",true)) gcode.add("M220 S80"); //slow speed
-            } else if (layer==1) {
+                if (ini.get("firstLayerSlow",true)) gcode.add("M220 S40"); //slow speed
+            } else if (layer==2) { ////////LET OP
                 gcode.add("M106");      //fan on
                 gcode.add("M220 S100"); //normal speed
             }
@@ -86,12 +89,14 @@ public:
                     float sublayer = (layer==0) ? 0.0 : layer + (useSubLayers ? float(curLayerCommand)/totalLayerCommands : 0);
                     float z = sublayer*layerHeight+zOffset;
                     //ofxExit();
-                    bool isTraveling = i==0; //!isLoop && i==0 && prev.distance(to)>minimalDistanceForRetraction;
-
+                    //bool isTraveling = i==0; //!isLoop && i==0 && prev.distance(to)>minimalDistanceForRetraction;
+                    bool isTraveling = i==0; //!isLoop && i==0;
+                    bool doRetract = prev.distance(to)>minimalDistanceForRetraction;
+                    
                     if (enableTraveling && isTraveling) {
-                         //gcode.addCommandWithParams("G1 E%03f F%03f", extruder-retraction, retractionSpeed);
-                         gcode.addCommandWithParams("G1 X%.03f Y%.03f Z%.03f F%.03f", to.x, to.y, z, travelSpeed*60);
-                         //gcode.addCommandWithParams("G1 E%03f F%03f", extruder, retractionSpeed);
+                        if (doRetract) gcode.addCommandWithParams("G1 E%03f F%03f", extruder-retraction, retractionSpeed*60);
+                        gcode.addCommandWithParams("G1 X%.03f Y%.03f Z%.03f F%.03f", to.x, to.y, z + (doRetract ? hop : 0), travelSpeed*60);
+                        if (doRetract) gcode.addCommandWithParams("G1 E%03f F%03f", extruder, retractionSpeed*60);
                     }
                     else {
                         extruder += prev.distance(to) * wallThickness * layerHeight / filamentThickness;
@@ -109,31 +114,6 @@ public:
 
         gcode.insert(endGcodeFilename);
         gcode.save(outputGcodeFilename);
-
-//        if (exportOnly) {
-//            ofFile f(filename);
-//            string copyGCodeToPath = ini.get("copyGCodeToPath","");
-//            if (copyGCodeToPath!="") {
-//                ofFile sd(copyGCodeToPath);
-//                string shortName = f.getFileName().substr(0,8);
-//                shortName = ofxStringBeforeFirst(shortName, "."); //remove ext
-//                if (sd.exists()) {
-//                    cout << "copy " << shortName+".gco" << " to " << copyGCodeToPath << endl;
-//                    f.copyTo(copyGCodeToPath+"/"+shortName+".gco");
-//                }
-//            }
-//        }
-//
-//        if (exportOnly || ini.get("printingDisabled",false)==true) return;
-
-        //send generated gcode to printer
-//        cout << "ultimaker.isBusy: " << ultimaker.isBusy << endl;
-//        cout << "frame: " << ofGetFrameNum() << endl;
-//        if (ofGetFrameNum()<210 || ultimaker.isBusy) return;
-//
-//        ultimaker.load(filename);
-//        ultimaker.startPrint();
-//        ultimaker.sendCommandsFromFile(filename);
     }
 
 };

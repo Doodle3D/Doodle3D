@@ -8,8 +8,6 @@
 #include "ofxHTTPServer.h"
 #endif
 
-static const string VERSION = "osx-0011";
-
 //globals
 ofPath path;
 ofImage mask;
@@ -30,9 +28,9 @@ int targetTemperature=220;
 bool debug=false;
 bool useSubpathColors=false;
 int serverPort=8888;
-bool deviceAutoDetect=true;
-int deviceSpeed=115200;
-string deviceName;
+//bool deviceAutoDetect=true;
+//int deviceSpeed=115200;
+//string deviceName;
 bool connectionFailed=false;
 float globalScale=1;
 int simplifyIterations=10;
@@ -52,6 +50,7 @@ bool autoWarmUpRequested=false;
 string autoWarmUpCommand="M104 S230";
 int autoWarmUpDelay=3;
 int checkTemperatureInterval=1;
+ofPoint btnHelpPos(1250,780);
 
 float scaleFunction(float f) {
     return vfunc[int(ofMap(f, 0, 1, vres-1, 0, true))];
@@ -79,6 +78,7 @@ public:
     ofImage bg,bg_busy,vb,shapes;
     Btn btnNew,btnSave,btnOops,btnLoadPrevious,btnLoadNext,btnPrint,btnStop;
     Btn btnTwistLeft,btnTwistRight,btnZoomIn,btnZoomOut,btnHigher,btnLower;
+    ofImage btnHelp;
     Canvas canvas;
     Side side;
     Thermometer thermometer;
@@ -89,11 +89,9 @@ public:
     ofSerial tmp;
     string ipaddress,networkName;
     ofTrueTypeFont font;
-
-
+    string version;
 
     void setup() {
-
 
         #ifdef TARGET_OSX
         ofSetDataPathRoot("../Resources/");
@@ -102,14 +100,16 @@ public:
         resourceFolder = ""; //ofFilePath::getCurrentWorkingDirectory()+"data\\";
         #endif
 
-        documentFolder = ofFilePath::getPathForDirectory((string)getenv("HOME")+"/Documents/Doodle3D/"); //or ofFilePath::getUserHomeDir()
+        documentFolder = ofFilePath::getUserHomeDir() + "/Documents/Doodle3D/";
+        //ofFilePath::getPathForDirectory((string)getenv("HOME")+"/Documents/Doodle3D/"); //or ofFilePath::getUserHomeDir()
 
         cout << "resourceFolder: " << resourceFolder << endl;
         cout << "documentFolder: " << documentFolder << endl;
 
         doodlesFolder = documentFolder + "doodles/";
         gcodeFolder = documentFolder + "gcode/";
-        //ofSetDataPathRoot(documentFolder);
+        imagesFolder = resourceFolder+"images/";
+
         if (!ofDirectory(documentFolder).exists()) ofDirectory::createDirectory(documentFolder);
         if (!ofDirectory(doodlesFolder).exists()) ofDirectory::createDirectory(doodlesFolder);
         if (!ofDirectory(gcodeFolder).exists()) ofDirectory::createDirectory(gcodeFolder);
@@ -118,24 +118,13 @@ public:
         ini.load(documentFolder+"Doodle3D.ini");
 
         if (params["loadSettings"]!="") {
-            //string folder = ofFilePath::getPathForDirectory("~/Documents/Doodle3D/");
             cout << "loadSettings: " << (documentFolder+params["loadSettings"]) << endl;
             ini.load(documentFolder+params["loadSettings"]);
         }
 
-        //ofSetDataPathRoot(resourceFolder);
-
-        #ifdef TARGET_OSX
-        imagesFolder = resourceFolder;
-        #else
-        imagesFolder = resourceFolder+"images/";
-        #endif
-
-        //cout << "ofSetDataPathRoot to " << resourceFolder << endl;
-
         fps = ini.get("frameRate",fps);
-        deviceSpeed = ini.get("device.speed",deviceSpeed);
-        deviceAutoDetect = ini.get("device.autoDetect",true);
+//        deviceSpeed = ini.get("device.speed",deviceSpeed);
+//        deviceAutoDetect = ini.get("device.autoDetect",true);
         targetTemperature = ini.get("targetTemperature",targetTemperature);
         objectHeight = ini.get("objectHeight",objectHeight);
         maxObjectHeight = ini.get("maxObjectHeight",maxObjectHeight);
@@ -150,12 +139,16 @@ public:
         side.border = ini.get("side.border",side.border);
         side.vStep = ini.get("side.vStep",side.vStep);
         useSubpathColors = ini.get("useSubpathColors",useSubpathColors);
+        printer.hop = ini.get("hop",printer.hop);
         printer.screenToMillimeterScale=ini.get("screenToMillimeterScale",printer.screenToMillimeterScale);
         printer.speed = ini.get("speed",printer.speed);
         printer.travelSpeed = ini.get("travelSpeed",printer.travelSpeed);
         printer.wallThickness = ini.get("wallThickness",printer.wallThickness);
         printer.zOffset = ini.get("zOffset",printer.zOffset);
         printer.useSubLayers = ini.get("useSubLayers",printer.useSubLayers);
+        printer.minimalDistanceForRetraction = ini.get("retraction.minDistance",1);
+        printer.retraction = ini.get("retraction.amount",0);
+        printer.speed = ini.get("retraction.speed",0);
         twists = ini.get("twists",twists);
         printer.filamentThickness = ini.get("filamentThickness",printer.filamentThickness);
         printer.loopAlways = ini.get("loopAlways",printer.loopAlways);
@@ -163,13 +156,14 @@ public:
         autoWarmUpCommand = ini.get("autoWarmUpCommand",autoWarmUpCommand);
         autoWarmUpDelay = ini.get("autoWarmUpDelay",autoWarmUpDelay)*fps; //multiplied by fps
         serverPort = ini.get("server.port",serverPort);
-        deviceName = ini.get("device.name",deviceName);
+//        deviceName = ini.get("device.name",deviceName);
         simplifyIterations = ini.get("simplify.iterations",simplifyIterations);
         simplifyMinNumPoints = ini.get("simplify.minNumPoints",simplifyMinNumPoints);
         simplifyMinDistance = ini.get("simplify.minDistance",simplifyMinDistance);
         checkTemperatureInterval = ini.get("checkTemperatureInterval",checkTemperatureInterval);
 
-
+        btnHelp.loadImage("images/btnInfo.png");
+        btnHelp.setAnchorPercent(.5,.5);
         btnNew.setup(0xffff00);
         btnSave.setup(0x00ff00);
         btnOops.setup(0x006464);
@@ -201,10 +195,11 @@ public:
         ofSetEscapeQuitsApp(ini.get("quitOnEscape",true));
         ofEnableSmoothing();
         ofBackground(255);
-
+                
+        
         #ifdef TARGET_OSX
         server = ofxHTTPServer::getServer(); // get the instance of the server
-        server->setServerRoot(".");          // folder with files to be served
+        server->setServerRoot("www");          // folder with files to be served
         server->setUploadDir("upload");		 // folder to save uploaded files
         server->setCallbackExtension("of");	 // extension of urls that aren't files but will generate a post or get event
         server->setListener(*this);
@@ -221,9 +216,16 @@ public:
 
         refreshDebugInfo();
 
-        cout << "deviceName: " << deviceName << endl;
+//        cout << "deviceName: " << deviceName << endl;
 
-        ultimaker.setup(deviceName);
+        //        vector<string> lines = ofxLoadStrings(resourceFolder+"VERSION");
+        //        if (lines.size()>0) version = lines[0];
+        
+        
+        version = getVersion();
+
+        
+        ultimaker.setup();
     }
 
     #ifdef TARGET_OSX
@@ -242,7 +244,7 @@ public:
         if (items.size()>0) {
             vector<string> lines = ofSplitString(items[0],"\n");
             files.loadFromStrings(lines);
-            files.save("doodle-"+ofxUrlToSafeLocalPath(ofxGetIsoDateTime())+".txt");
+            files.saveSvg(resourceFolder+"template.svg", doodlesFolder+"/doodle-"+ofxUrlToSafeLocalPath(ofxGetIsoDateTime())+".svg");
         }
     }
     #endif
@@ -283,7 +285,11 @@ public:
         ofSetColor(255);
 
         bg.draw(0,0);
+        
+        //ofSetColor(0);
+        //ofDrawBitmapString("?",ofGetWidth()-16,ofGetHeight()-16);
 
+        ofSetColor(255);
         canvas.draw();
         if (debug) canvas.drawDebug();
         side.draw();
@@ -291,30 +297,36 @@ public:
         if (ultimaker.isStartTagFound) thermometer.draw();
         ofSetColor(0);
 
+        ofSetColor(255);
+        btnHelp.draw(btnHelpPos);
+        
         if (debug) drawConsole();
     }
 
     void drawConsole() {
-        #define console(s) font.drawStringAsShapes(string(s).substr(0,MIN(string(s).size(),75)),x,y+=h);
+        //font.drawStringAsShapes
+        #define console(s) ofDrawBitmapString(string(s).substr(0,MIN(string(s).size(),75)),x,y+=h);
         float x=220, y=175, h=17;
-        console("Doodle3D " + VERSION + " - Copyright (c) 2012-2013 by Rick Companje");
+        console("Doodle3D " + version + " Copyright (c) 2012-2013 by Rick Companje");
         console("=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=");
         string connectionStatus = ultimaker.isConnectedToPort ? "Connected to port" : "NOT connected to port";
         string startTagStatus = ultimaker.isStartTagFound ? "The Marlin 'start' tag was found (this is good)" : "Start tag not found. Please check firmware or connection speed";
-        console(connectionStatus + " " + deviceName + " @ " + ofToString(deviceSpeed) + "bps");
+        console(connectionStatus + " " + ultimaker.deviceName + " @ " + ofToString(ultimaker.deviceSpeed) + "bps");
         console(startTagStatus);
         if (ultimaker.temperature!=0) console("Temperature: " + ofToString(ultimaker.temperature));
         console("Framerate: " + ofToString(ofGetFrameRate(),0));
         console("iPad version: http://" + ipaddress + ":" + ofToString(serverPort) + " on WiFi network: " + networkName);
         console("=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=");
-        for (int i=MAX(0,ultimaker.messages.size()-19); i<ultimaker.messages.size(); i++) {
-            console(ultimaker.messages.at(i));
-        }
+//        deque<string> msg = ultimaker.messages;
+//        for (int i=MAX(0,msg.size()-19); i<msg.size(); i++) {
+//            console(msg.at(i));
+//        }
         #undef console
     }
 
     void stop() {
-        ultimaker.sendCommandsFromFile(resourceFolder+"end.gcode",true);
+        cout << "test " << resourceFolder+"gcode/end.gcode" << endl;
+        ultimaker.sendCommandsFromFile(resourceFolder+"gcode/end.gcode",true);
     }
 
     void print(bool exportOnly=false) {
@@ -322,7 +334,7 @@ public:
 
         string hourMinutes = ofxFormatDateTime(ofxGetDateTime(),"%H.%M");
         string outputFilename = gcodeFolder+files.getFilename()+"_"+hourMinutes+".gcode";
-        printer.print(outputFilename, resourceFolder+"start.gcode",resourceFolder+"end.gcode");
+        printer.print(outputFilename, resourceFolder+"gcode/start.gcode",resourceFolder+"gcode/end.gcode");
 
         if (exportOnly) return;
 
@@ -335,6 +347,8 @@ public:
 
         canvas.mousePressed(x, y, button);
         side.mousePressed(x, y, button);
+//        cout << btnHelpPos.distance(ofPoint(x,y)) << endl;
+        if (btnHelpPos.distance(ofPoint(x,y))<btnHelp.width/2) showHelp();
         if (btnNew.hitTest(x,y)) { files.cur=-1; canvas.clear(); files.unloadFile(); }
         if (btnSave.hitTest(x,y)) files.save();
         if (btnLoadPrevious.hitTest(x,y)) files.loadPrevious();
@@ -393,7 +407,11 @@ public:
     }
 
     void showHelp() {
-        ofSystemAlertDialog("On your tablet connect to the '" + getWirelessNetwork() + "' network.\nIn the webbrowser open: http://" + getIP() + ":" + ofToString(serverPort));
+        ofSystemAlertDialog("Doodle3D version " + getVersion() + " - www.doodle3d.com\n\n=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=\n\n"
+                            "Did you know you can use Doodle3D on your iPad?\n\n"
+                            "1. Connect with your tablet to the '" + getWirelessNetwork() + "' network.\n\n"
+                            "2. On your tablet open this webpage:\n\n"
+                            "http://" + getIP() + ":" + ofToString(serverPort));
     }
 
     string ofxExecute(string cmd) {
@@ -414,12 +432,20 @@ public:
         return "[unknown]";
         #endif
     }
+    
+    string getVersion() {
+        #ifdef TARGET_OSX
+        return ofxExecute("defaults read " + resourceFolder + "../Info CFBundleShortVersionString");
+        #else
+        return "[unknown]"
+        #endif
+    }
 
     string getWirelessNetwork() {
         #ifdef TARGET_OSX
         string network = ofxExecute("networksetup -getairportnetwork en1"); // | cut -c 24-");
         if (network=="You are not associated with an AirPort network.") return "[unknown]";
-        else return network.substr(24);
+        else return network.substr(23);
         #else
         return "[unknown]";
         #endif
@@ -480,11 +506,12 @@ int main(int argc, const char** argv){
             params[keyvalue[0]] = keyvalue[1];
             cout << "param: " << keyvalue[0] << "=" << keyvalue[1] << endl;
         }
-
     }
 
     ofAppGlutWindow window;
-    //window.setGlutDisplayString("rgba double samples>=4");
+    #ifdef TARGET_OSX
+    window.setGlutDisplayString("rgba double samples>=4");
+    #endif
     ofSetupOpenGL(&window, 1280, 800, OF_WINDOW);
     ofRunApp(new ofApp());
 }

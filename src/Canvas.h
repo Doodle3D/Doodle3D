@@ -8,9 +8,14 @@ public:
     int circleDetail;
     ofRectangle bounds;
     bool isDrawing;
+    bool isErasing;
 
-    void setup() {
+    Canvas() {
+        isErasing = false;
         isDrawing = false;
+    }
+    
+    void setup() {
         bounds.set(220,180,640,440);
         circleDetail = ini.get("circleDetail",16);
         path.setFilled(false);

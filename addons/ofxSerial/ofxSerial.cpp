@@ -160,6 +160,28 @@ static bool isDeviceArduino( ofSerialDeviceInfo & A ){
 	return ( strstr(A.getDeviceName().c_str(), "usbserial") != NULL );
 }
 
+vector<string> ofxSerial::getArduinoDevices(bool fullpath) {
+    vector<string> names;
+    vector<ofSerialDeviceInfo> devices = getDeviceList();
+    for (size_t i=0; i<devices.size(); i++) {
+        if (devices[i].getDevicePath().find("usbmodem")!=string::npos ||
+            (devices[i].getDevicePath().find("usbserial")!=string::npos)) {
+            string name = devices[i].getDevicePath();
+            size_t startpos = name.find(".");
+            name = (string::npos != startpos) ? name.substr(startpos+1) : name;
+            if (std::find(names.begin(), names.end(), name)==names.end()) {
+                names.push_back(name);
+            }
+        }
+    }
+    if (fullpath) {
+        for (size_t i=0; i<names.size(); i++) {
+            names[i] = "/dev/tty."+names[i];
+        }
+    }
+    return names;
+}
+
 //----------------------------------------------------------------
 void ofxSerial::buildDeviceList(){
 
@@ -569,7 +591,7 @@ int ofxSerial::writeBytes(unsigned char * buffer, int length){
 			return OF_SERIAL_ERROR;
 		}
 
-		ofLog(OF_LOG_VERBOSE,"ofxSerial: numWritten %i", numWritten);
+		//ofLog(OF_LOG_VERBOSE,"ofxSerial: numWritten %i", numWritten);
 
 	    return numWritten;
     #endif

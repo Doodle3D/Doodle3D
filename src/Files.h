@@ -54,9 +54,11 @@ public:
     }
     
     void loadFromStrings(vector<string> lines) {
+        cout << "lines: " << lines.size() << endl;
         for (int i=0; i<lines.size(); i++) {
             vector<string> coords = ofSplitString(lines[i], " ");
             for (int j=0; j<coords.size(); j++) {
+                if (coords.size()<=1) break; //ignore very small paths
                 vector<string> tuple = ofSplitString(coords[j], ",");
                 if (tuple.size()!=2) continue; //{ cout << "error in textfile" << endl; return; }
                 float x = ofToFloat(tuple[0]);
@@ -80,10 +82,13 @@ public:
     }
     
     void load(string filename) {
+        cout << "Files::load: " << filename << endl;
         //if (!path) return;
         if (!ofxFileExists(filename)) return; //file not existing or removed   
         path.clear();
-        loadFromStrings(ofxLoadStrings(filename));
+        string ext = ofxGetFileExtension(filename);
+        if (ext==".txt") loadFromStrings(ofxLoadStrings(filename));
+        else if (ext==".svg") loadFromSvg(filename);
     }
 
     void deleteCurrentFile() {
@@ -106,7 +111,7 @@ public:
     void saveAs() {
         //ofSetFullscreen(false);
         listDir();
-        string filename = "doodle"+ofToString(dir.numFiles()+1)+".txt";
+        string filename = "doodle"+ofToString(dir.numFiles()+1)+".svg";
         ofFileDialogResult result = ofSystemSaveDialog(filename,"Je tekening wordt altijd opgeslagen in de ~/Documents/Doodle3D/doodles/ map.");
         if (result.bSuccess) {
              save(result.getName());   
@@ -114,7 +119,16 @@ public:
         //ofSetFullscreen(true);
     }
     
-    void save(string filename) {        
+    void save(string filename) {
+        if (ofxGetFileExtension(filename)!=".svg") {
+            ofLogError() << "incorrect filename for saveSvg:" << filename;
+            return;
+        } else {
+            saveSvg(resourceFolder+"template.svg",doodlesFolder+filename);
+        }
+    }
+    
+    void saveAsText(string filename) {
         vector<string> lines;
         vector<ofSubPath> &subpaths = path.getSubPaths();
         for (int i=0; i<subpaths.size(); i++) {
@@ -138,6 +152,7 @@ public:
     }
     
     void saveSvg(string templateFilename, string outputFilename) { //absolute path is possible
+        cout << templateFilename << "\n" << outputFilename << endl;
         
         ifstream f(ofToDataPath(templateFilename).c_str(),ios::in);
         stringstream buf;
@@ -161,6 +176,27 @@ public:
         str = ofxReplaceString(str, "{PATH}", strPath);
         
         ofxSaveString(outputFilename, str);
+    }
+    
+    void loadFromSvg(string filename) {
+        vector<string> lines = ofxLoadStrings(filename);
+        string path;
+        for (int i=0; i<lines.size(); i++) {
+            int pos = lines[i].find(" d=\"");
+            if (pos!=string::npos) {
+                path = lines[i].substr(pos+4);
+                pos = path.find("\"");
+                path = path.substr(0,pos);
+                break;
+            }
+        }
+        if (path!="") {
+            ofStringReplace(path, "M", "\n");
+            ofStringReplace(path, " L", "_");
+            ofStringReplace(path, " ", ",");
+            ofStringReplace(path, "_", " ");
+            loadFromStrings(ofSplitString(path, "\n"));
+        }
     }
     
     void unloadFile() {
