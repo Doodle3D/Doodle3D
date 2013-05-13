@@ -21,6 +21,9 @@ $(window).ready(function() {
 	btnOops.addEventListener('mouseup',stopOops,false);
 	btnPrint.addEventListener('mousedown',print,false);
 	btnPrint.addEventListener('touchstart',print,false);
+	btnSave.addEventListener('mousedown',print,false);
+	btnSave.addEventListener('touchstart',print,false);
+
 	document.body.addEventListener('touchmove',prevent,false);
 });
 
@@ -99,6 +102,5 @@ function print(e) {
 
 	$.post("/doodle3d.of", { data:output }, function(data) {
 	 	btnPrint.disabled = false;
-	 	//alert(data);
 	});
 }

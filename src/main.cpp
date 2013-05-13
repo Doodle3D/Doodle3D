@@ -161,6 +161,7 @@ public:
         simplifyMinNumPoints = ini.get("simplify.minNumPoints",simplifyMinNumPoints);
         simplifyMinDistance = ini.get("simplify.minDistance",simplifyMinDistance);
         checkTemperatureInterval = ini.get("checkTemperatureInterval",checkTemperatureInterval);
+        ultimaker.preBufferValue = ini.get("preBufferValue",ultimaker.preBufferValue);
 
         btnHelp.loadImage("images/btnInfo.png");
         btnHelp.setAnchorPercent(.5,.5);
@@ -304,6 +305,7 @@ public:
     }
 
     void drawConsole() {
+        ofSetColor(0);
         //font.drawStringAsShapes
         #define console(s) ofDrawBitmapString(string(s).substr(0,MIN(string(s).size(),75)),x,y+=h);
         float x=220, y=175, h=17;
@@ -313,6 +315,7 @@ public:
         string startTagStatus = ultimaker.isStartTagFound ? "The Marlin 'start' tag was found (this is good)" : "Start tag not found. Please check firmware or connection speed";
         console(connectionStatus + " " + ultimaker.deviceName + " @ " + ofToString(ultimaker.deviceSpeed) + "bps");
         console(startTagStatus);
+        console(files.dir.getPath(files.cur));
         if (ultimaker.temperature!=0) console("Temperature: " + ofToString(ultimaker.temperature));
         console("Framerate: " + ofToString(ofGetFrameRate(),0));
         console("iPad version: http://" + ipaddress + ":" + ofToString(serverPort) + " on WiFi network: " + networkName);

@@ -64,10 +64,14 @@ public:
                 float x = ofToFloat(tuple[0]);
                 float y = ofToFloat(tuple[1]);
                 ofPoint p = ofPoint(x,y); // + ofPoint(bounds.x, bounds.y);
+//                cout << p << endl;
+
                 p += ini.get("loadOffset",ofPoint());
-                if (j==0) {
-                    path.moveTo(p.x,p.y);
-                }
+
+                ofRectangle bounds(0,0,640,440);
+                if (!bounds.inside(p)) continue;
+                
+                if (j==0) path.moveTo(p.x,p.y);
                 else path.lineTo(p.x,p.y);
             }
         }
@@ -191,6 +195,8 @@ public:
             }
         }
         if (path!="") {
+            ofStringReplace(path, "M ", "M");
+            ofStringReplace(path, "L ", "L");
             ofStringReplace(path, "M", "\n");
             ofStringReplace(path, " L", "_");
             ofStringReplace(path, " ", ",");

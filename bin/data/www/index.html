@@ -4,7 +4,8 @@
 	<meta name="apple-mobile-web-app-capable" content="yes" />
 	<meta name="apple-mobile-web-app-status-bar-style" content="black" />
 	<meta name="robots"content="index,follow" />
-	<meta name="viewport" content="minimum-scale=1.0, width=device-width, maximum-scale=0.6667, user-scalable=no" />
+	<meta name="viewport" content="width=1024, height=768, user-scalable=no" />
+
 	<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
 	<link rel="apple-touch-icon-precomposed" href="icon.png"/>
 	<link rel="apple-touch-startup-image" href="bg_vertical.jpg" />
@@ -14,10 +15,18 @@
 </head>
 
 <body>
-	<div id="logo" onclick="location.reload()"></div>
-	<div class="btn" id="btnPrint"></div>
+	<!-- <div id="logo" onclick="location.reload()"></div> -->
+	<!-- <div class="btn" id="btnPrint"></div>
 	<div class="btn" id="btnNew"></div>
-	<div class="btn" id="btnOops"></div>
+	<div class="btn" id="btnOops"></div> -->
+
+	<img id="logo" src="logo.png" onclick="location.reload()">	
+	<img class="btn" id="btnPrint" src="btnPrint.png">
+	<img class="btn" id="btnNew" src="btnNew.png">
+	<img class="btn" id="btnOops" src="btnOops.png">
+	<img class="btn" id="btnSave" src="btnSave.png">
+	<img class="btn" id="btnStop" src="btnStop.png">
+	
 	<svg id="svg"><path id="path" d="M0 0" fill="none" stroke="black" stroke-width="3"/></svg>
 </body>
 </html>

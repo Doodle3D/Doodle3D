@@ -90,6 +90,18 @@ public:
     }
     
     void update() {
+
+//        vector<ofPoint*> points = ofxGetPointsFromPath(path);
+//        for (int i=0; i<points.size(); i++) {
+//            ofPoint &p = *points[i];
+//            if (p.x>bounds.width || p.y>bounds.height) {
+//                points.erase(points.begin()+i);
+//                path.flagShapeChanged();
+////                cout << "outside!" << endl;
+//            }
+//        }
+        
+        
         float translateStep=3;
         if (ofGetKeyPressed('-')) zoom(-1);
         if (ofGetKeyPressed('=')) zoom(1);
