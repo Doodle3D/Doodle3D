@@ -22,6 +22,7 @@ public:
         screenToMillimeterScale=.3f;
         speed=35;
         travelSpeed=200;
+        retractionSpeed=.1; //guess
         wallThickness=.8f;
         zOffset=0;
         useSubLayers=true;
@@ -65,7 +66,7 @@ public:
             points = ofxGetPointsFromPath(p);
 
             if (layer==0) {
-                gcode.add("M107");
+                gcode.add("M107"); //fan off
                 if (ini.get("firstLayerSlow",true)) gcode.add("M220 S40"); //slow speed
             } else if (layer==2) { ////////LET OP
                 gcode.add("M106");      //fan on
@@ -87,10 +88,10 @@ public:
                     int last = commands.size()-1;
                     ofPoint to = commands[(even || isLoop || loopAlways) ? i : last-i].to;
                     float sublayer = (layer==0) ? 0.0 : layer + (useSubLayers ? float(curLayerCommand)/totalLayerCommands : 0);
-                    float z = sublayer*layerHeight+zOffset;
+                    float z = (sublayer+1)*layerHeight+zOffset;
                     //ofxExit();
                     //bool isTraveling = i==0; //!isLoop && i==0 && prev.distance(to)>minimalDistanceForRetraction;
-                    bool isTraveling = i==0; //!isLoop && i==0;
+                    bool isTraveling = !isLoop && i==0; ///i==0; //changed 23 july 2013
                     bool doRetract = prev.distance(to)>minimalDistanceForRetraction;
                     
                     if (enableTraveling && isTraveling) {

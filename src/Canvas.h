@@ -19,6 +19,7 @@ public:
         bounds.set(220,180,640,440);
         circleDetail = ini.get("circleDetail",16);
         path.setFilled(false);
+        path.setFillColor(0);
         path.setCurveResolution(100);
         path.setStrokeColor(0);
     }
@@ -49,7 +50,7 @@ public:
             }
         }
         
-        if (subpaths.size()>1) {
+        if (showSubPathLines && !path.isFilled() && subpaths.size()>1) {
             ofSetColor(200);
             for (int i=0; i<subpaths.size()-1; i++) {
                 vector<ofSubPath::Command> &left = subpaths[i].getCommands();

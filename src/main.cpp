@@ -4,6 +4,7 @@
 #include "ofxIniSettings.h"
 #include "ofxUltimaker.h"
 #include "ofxGCode.h"
+#include "ofxOpenCv.h"
 #ifdef TARGET_OSX
 #include "ofxHTTPServer.h"
 #endif
@@ -51,6 +52,7 @@ string autoWarmUpCommand="M104 S230";
 int autoWarmUpDelay=3;
 int checkTemperatureInterval=1;
 ofPoint btnHelpPos(1250,780);
+bool showSubPathLines=true;
 
 float scaleFunction(float f) {
     return vfunc[int(ofMap(f, 0, 1, vres-1, 0, true))];
@@ -65,6 +67,7 @@ Files files;
 #include "Side.h"
 #include "Thermometer.h"
 #include "Printer.h"
+#include "Scanner.h"
 
 #ifdef TARGET_OSX
 class ofApp : public ofBaseApp, public ofxHTTPServerListener {
@@ -81,6 +84,7 @@ public:
     ofImage btnHelp;
     Canvas canvas;
     Side side;
+    Scanner scanner;
     Thermometer thermometer;
     Printer printer;
     #ifdef TARGET_OSX
@@ -132,6 +136,7 @@ public:
         minScale = ini.get("minScale",minScale);
         maxScale = ini.get("maxScale",maxScale);
         side.setShape(ini.get("shape","|").at(0));
+        showSubPathLines = ini.get("showSubPathLines",showSubPathLines);
         maxScaleDifference = ini.get("maxScaleDifference",maxScaleDifference); //problems with resolution>layers. should be half of wallThickness or so.
         side.visible = ini.get("side.visible",side.visible);
         side.is3D = ini.get("side.is3D",side.is3D);
@@ -148,7 +153,7 @@ public:
         printer.useSubLayers = ini.get("useSubLayers",printer.useSubLayers);
         printer.minimalDistanceForRetraction = ini.get("retraction.minDistance",1);
         printer.retraction = ini.get("retraction.amount",0);
-        printer.speed = ini.get("retraction.speed",0);
+        printer.retractionSpeed = ini.get("retraction.speed",0);
         twists = ini.get("twists",twists);
         printer.filamentThickness = ini.get("filamentThickness",printer.filamentThickness);
         printer.loopAlways = ini.get("loopAlways",printer.loopAlways);
@@ -208,23 +213,28 @@ public:
         #endif
 
         files.setup();
-
+        
         if (ini.get("window.center",true)) {
             int x = ofGetScreenWidth()/2 - window.width/2;
             int y = ofGetScreenHeight()/2 - window.height/2;
             ofSetWindowPosition(x,y);
         }
 
-        refreshDebugInfo();
-
-//        cout << "deviceName: " << deviceName << endl;
-
-        //        vector<string> lines = ofxLoadStrings(resourceFolder+"VERSION");
-        //        if (lines.size()>0) version = lines[0];
+        //} else {
+        //  int x = ofGetScreenWidth()/2 - window.width/2 + ofRandom(-200,200);
+        //  int y = ofGetScreenHeight()/2 - window.height/2 + ofRandom(-50,50);
+        //  ofSetWindowPosition(x,y);
+        //}
         
+        //if (params["width"]!="" || params["height"]!="") {
+        //    int w = ofToInt(params["width"]);
+        //    int h = ofToInt(params["height"]);
+        //    ofSetWindowShape(w,h);
+        //}
+
+        refreshDebugInfo();
         
         version = getVersion();
-
         
         ultimaker.setup();
     }
@@ -315,7 +325,8 @@ public:
         string startTagStatus = ultimaker.isStartTagFound ? "The Marlin 'start' tag was found (this is good)" : "Start tag not found. Please check firmware or connection speed";
         console(connectionStatus + " " + ultimaker.deviceName + " @ " + ofToString(ultimaker.deviceSpeed) + "bps");
         console(startTagStatus);
-        console(files.dir.getPath(files.cur));
+//        cout << files.cur << " "  << files.dir.numFiles() << endl;
+        if (files.cur>0 && files.cur<files.dir.numFiles()) console(files.dir.getPath(files.cur));
         if (ultimaker.temperature!=0) console("Temperature: " + ofToString(ultimaker.temperature));
         console("Framerate: " + ofToString(ofGetFrameRate(),0));
         console("iPad version: http://" + ipaddress + ":" + ofToString(serverPort) + " on WiFi network: " + networkName);
@@ -340,7 +351,11 @@ public:
         printer.print(outputFilename, resourceFolder+"gcode/start.gcode",resourceFolder+"gcode/end.gcode");
 
         if (exportOnly) return;
-
+        
+//        outputFilename = "/Users/rick/Documents/Doodle3D/gcode/hilde-mannetje.svg_19.47.gcode";
+        
+        cout << "print from file: " << outputFilename << endl;
+        
         ultimaker.sendCommandsFromFile(outputFilename);
     }
 
@@ -458,6 +473,12 @@ public:
         ipaddress = getIP();
         networkName = getWirelessNetwork();
     }
+    
+    void dragEvent(ofDragInfo dragInfo) {
+        if (dragInfo.files.size()==1) {
+            files.loadFromImage(dragInfo.files[0]);
+        }
+    }
 
     void keyPressed(int key) {
         switch (key) {
@@ -470,10 +491,11 @@ public:
             case 'a': side.toggle(); break;
             case 'b': useSubpathColors=!useSubpathColors; break;
             case 'C': canvas.createCircle(); break;
-            case 'c': case 'n': canvas.clear(); files.unloadFile(); break;
-            case 'd': case 'i': debug=!debug; refreshDebugInfo(); break;
+            case 'c': canvas.clear(); files.unloadFile(); break;
+            case 'd': debug=!debug; refreshDebugInfo(); break;
             case 'e': print(true); break;
             case 'f': ofToggleFullscreen(); break;
+            case 'k': path.setFilled(!path.isFilled()); path.flagShapeChanged(); break;
             case 'h': objectHeight+=5; if (objectHeight>maxObjectHeight) objectHeight=maxObjectHeight; break;
             case 'H': objectHeight-=5; if (objectHeight<3) objectHeight=3; break;
             case 'G': ultimaker.sendCommand("G28 X0 Y0 Z0\nM84",2); break;
@@ -487,13 +509,29 @@ public:
 //            case 'r': ultimaker.setRelative(); break;
             case 'S': files.save(); break;
             case 's': files.saveAs(); break;
+            case '`': showSubPathLines=!showSubPathLines;
             case 't': ultimaker.sendCommand("M105",1); break;
             case 'u': case 'z': canvas.undo(); break;
             case '~': files.deleteCurrentFile(); break;
             case ' ': files.listDir(); break;
             case 'x': files.saveSvg(resourceFolder+"template.svg",documentFolder+"output.svg"); break;
             case 27: if (ultimaker.isThreadRunning()) ultimaker.stopThread(); break;
+            case 'n': cloneApp(); break; //run new instance of Doodle3D
+            case 'i': cout << getNumInstances() << endl; break;
         }
+    }
+    
+    int getNumInstances() {
+        string txt = ofxExecute("ps aux | grep 'Doodle3D.app'");
+        //cout << txt << endl;
+        vector<string> items = ofSplitString(txt, "\n");
+        return items.size()-2;
+    }
+    
+    void cloneApp() {
+        string result = ofSystemTextBoxDialog("Please enter the name of the settings file you want to load for the new window.","1.ini");
+        string cmd = "open /Applications/Doodle3D.app --new --args loadSettings=" + result;
+        system(cmd.c_str());
     }
 
     void windowResized(int w, int h) {
